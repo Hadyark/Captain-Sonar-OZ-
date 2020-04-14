@@ -2,6 +2,7 @@ functor
 import
     Input
     OS
+    System
 export
     portPlayer:StartPlayer
 define
@@ -46,8 +47,7 @@ in
         Submarine
     in
         Submarine = submarine(
-            id: ID
-            color: Color
+            id: id(id: ID color: Color name: "Random")
             isSubmerged: true
             visited: nil
             missile:0 
@@ -64,7 +64,7 @@ in
         Pos
         SubmarineUpdated
     in
-        Pos = pt(x: ({OS.rand} mod (Input.nColumn) + 1 ) y: ({OS.rand} mod (Input.nRow) + 1 ))
+        Pos = pt(x:({OS.rand} mod (Input.nColumn) + 1 ) y:({OS.rand} mod (Input.nRow) + 1 ))
         if {IsWater Pos} then
             ID = Submarine.id
             Position = Pos
@@ -400,6 +400,7 @@ in
     end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
+        {System.show streamPlayer}{System.show Stream}
         case Stream
             of nil then skip
             []initPosition(ID Position)|S then SubmarineUpdated in 
