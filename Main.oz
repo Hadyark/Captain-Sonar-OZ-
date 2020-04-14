@@ -3,37 +3,49 @@ import
     GUI
     Input
     PlayerManager
-    OS
     System
 define
-    PlayerPort
-    Port
-    NewPlayer
-    LoadPlayer
+    PortGui
+    PortPlayers
+
+    CreatePlayer
+    AskPosition
 in
-    Port = {GUI.portWindow}
-   {Send Port buildWindow}
-   fun {NewPlayer Count}
+%%% 1) Create the port for the GUI and launch its interface
+   PortGui = {GUI.portWindow}
+   {Send PortGui buildWindow}
+
+%%% 2) Create the port for every player using the PlayerManager and assign 
+%%% a unique id between 1 and Input.nbPlayer (< idnum >). The ids are given 
+%%% in the order they are defined in the input file end
+   fun {CreatePlayer Count}
       if Count > Input.nbPlayer then nil
       else
-     {PlayerManager.playerGenerator {List.nth Input.players Count} {List.nth Input.colors Count} Count} | {NewPlayer Count+1}
+	      {PlayerManager.playerGenerator {List.nth Input.players Count} {List.nth Input.colors Count} Count} | {CreatePlayer Count+1}
       end
    end
 
-   proc {LoadPlayer PlayerPort}
+   PortPlayers = {CreatePlayer 1}
+%%% 3) Ask every player to set up (choose its initial point, 
+%%% they all are at the surface at this time)
+   proc {AskPosition Players}
       ID
-      Pos
-   in
-      case PlayerPort of nil then skip
-     [] H|T then
-     {Send H initPosition(ID Pos)}
-     {Send Port initPlayer(ID Pos)}
-     {LoadPlayer T}
+      Position
+      in
+
+      case Players
+      of nil then skip
+      [] PPlayer|T then
+         {Send PPlayer initPosition(ID Position)}
+         {Send PortGui initPlayer(ID Position)}
+         {AskPosition T}
       end
    end
-%%%%%%%%%%%%%%%%Start Game %%%%%%%%%%%%%%%%%%%%%%%%%%
-   PlayerPort = {NewPlayer 1}
-   {LoadPlayer PlayerPort}
 
+   {AskPosition PortPlayers}
+
+%%% 4) When every player has set up, launch the game 
+%%% (either in turn by turn or in simultaneous mode, 
+%%% as specified by the input file)
 
 end
