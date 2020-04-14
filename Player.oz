@@ -31,6 +31,7 @@ define
     SayDeath
     SayDamageTaken
 
+    InitSubmarine
     IsWater
     IsNotVisited
     PossibleDirection
@@ -39,11 +40,14 @@ define
     DistanceDammage
     
 in
-%%% Initialize position submarine
-    fun {InitPosition ID Position Submarine Direction}
+      
+%%% Initialize submarine
+    fun {InitSubmarine Color ID}
+        Submarine
+    in
         Submarine = submarine(
             id: ID
-            position: Position
+            color: Color
             isSubmerged: true
             visited: nil
             missile:0 
@@ -53,6 +57,22 @@ in
             mines: nil
             life: Input.maxDamage
         )
+        Submarine
+    end  
+%%% Initialize position submarine
+    fun {InitPosition ID Position Submarine} 
+        Pos
+        SubmarineUpdated
+    in
+        Pos = pt(x: ({OS.rand} mod (Input.nColumn) + 1 ) y: ({OS.rand} mod (Input.nRow) + 1 ))
+        if {IsWater Pos} then
+            ID = Submarine.id
+            Position = Pos
+            SubmarineUpdated = {AdjoinList Submarine [position#Position]}
+            SubmarineUpdated
+        else
+            {InitPosition ID Position Submarine} 
+        end
     end
 %%% IsWater - Check is case contains water
     fun{IsWater Position}
@@ -97,8 +117,7 @@ in
         end
     end
 %%% Move - submarine
-    fun {Move ID Position Submarine} 
-        Direction
+    fun {Move ID Position Direction Submarine} 
         NewPosition
         Visit
     in
@@ -238,19 +257,19 @@ in
         {AdjoinList Submarine [mines#Submarine.mines.2]}
     end    
 %%% IsDead
-    proc {IsDead ID Answer Submarine}
+    fun {IsDead ID Answer Submarine}
         ID = Submarine.id
         Answer = Submarine.life == 0
+        Submarine
     end
 %%% UpdateEnemy
     fun {UpdateEnemy ID Submarine Data}
         Enemy
         Enemies
-        SubmarineUpdated
     in
         Enemy =   {AdjoinList Submarine.enemies.ID Data}
-        Enemies = {AdjoinList Submarine.enemies Enemy}
-        {AdjoinList Submarine Enemies}
+        Enemies = {AdjoinList Submarine.enemies [ID#Enemy]}
+        {AdjoinList Submarine [enemies#Enemies]}
     end
 %%% SayMove
     fun {SayMove ID Direction Submarine}
@@ -321,15 +340,19 @@ in
     end
 %%% SayAnswerDrone
     fun {SayAnswerDrone Drone ID Answer Submarine}
+        SubmarineUpdated
+    in
         if ID \= Submarine.id andthen Answer \= false then
             case Drone
             of drone(row X) then
-                {UpdateEnemy ID Submarine [lastX#X]}
+                SubmarineUpdated = {UpdateEnemy ID Submarine [lastX#X]}
             [] drone(column Y) then
-                {UpdateEnemy ID Submarine [lastY#Y]}
+                SubmarineUpdated = {UpdateEnemy ID Submarine [lastY#Y]}
+            else
+                SubmarineUpdated = Submarine
             end
         end
-        Submarine
+        SubmarineUpdated
     end
 %%% SayPassingSonar
     fun {SayPassingSonar ID Answer Submarine}
@@ -344,28 +367,36 @@ in
 %%% SayAnswerSonar
     fun {SayAnswerSonar ID Answer Submarine}
         Update
-        in
+        SubmarineUpdated
+    in
         if ID \= Submarine.id then
             Update = {UpdateEnemy ID Submarine [possibleX#Answer.x]}
-            {UpdateEnemy ID Submarine [possibleY#Answer.y]}
+            SubmarineUpdated = {UpdateEnemy ID Submarine [possibleY#Answer.y]}
+        else 
+            SubmarineUpdated = Submarine
         end
-        Submarine
+        SubmarineUpdated
     end
 %%% SayDeath
     fun {SayDeath ID Submarine}
-        {UpdateEnemy ID Submarine [isDeath#true]}
+        SubmarineUpdated
+    in
+        SubmarineUpdated = {UpdateEnemy ID Submarine [isDeath#true]}
+        SubmarineUpdated
     end
 %%% SayDamageTaken
     fun {SayDamageTaken ID Damage LifeLeft Submarine}
+        SubmarineUpdated
+    in
         if ID \= Submarine.id then
             case Damage
             of null then skip
-            [] sayDeath(ID) then {SayDeath ID Submarine}
+            [] sayDeath(ID) then SubmarineUpdated = {SayDeath ID Submarine}
             else
-                {UpdateEnemy ID Submarine [life#Submarine.enemies.ID.life-LifeLeft]}
+                SubmarineUpdated = {UpdateEnemy ID Submarine [life#Submarine.enemies.ID.life-LifeLeft]}
             end
         end
-        Submarine
+        SubmarineUpdated
     end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
@@ -375,7 +406,7 @@ in
                 SubmarineUpdated = {InitPosition ID Position Submarine}
                 {TreatStream S SubmarineUpdated} 
             []move(ID Position Direction)|S then SubmarineUpdated in 
-                SubmarineUpdated = {Move ID Position Submarine}
+                SubmarineUpdated = {Move ID Position Direction Submarine}
                 {TreatStream S SubmarineUpdated}  
             []dive|S then SubmarineUpdated in 
                 SubmarineUpdated = {Dive Submarine}
@@ -433,10 +464,12 @@ in
     fun{StartPlayer Color ID}
         Stream
         Port
+        Submarine
     in
         {NewPort Stream Port}
         thread
-            {TreatStream Stream}
+            Submarine = {InitSubmarine Color ID}
+            {TreatStream Stream Submarine}
         end
         Port
     end
