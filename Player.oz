@@ -83,9 +83,13 @@ in
         if Position.x > 0 andthen Position.x < Input.nColumn then {System.show player(func: isWater msg:firstIf)}
             if Position.y > 0 andthen Position.y < Input.nRow then {System.show player(func: isWater msg:secondIf)}
                 {List.nth {List.nth Input.map Position.x} Position.y} == 0
+            else
+                false
             end
+        else
+            false
         end
-        false
+        
     end
 %%% IsNotVisited - Check if the case has been already visited
     fun{IsNotVisited Visited Position}
@@ -137,7 +141,6 @@ in
     fun {Move ID Position Direction Submarine} 
         NewPosition
         Visit
-        Dir
     in
         if Submarine.life > 0 then
             {System.show player(func: move msg:afterIf)}
