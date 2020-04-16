@@ -317,18 +317,30 @@ in
     end
 %%% UpdateEnemy
     fun {UpdateEnemy ID Submarine Data}
+        Up
+        Updated
         Enemy
         Enemies
     in
-        Enemy =   {AdjoinList Submarine.enemies.ID Data}
-        Enemies = {AdjoinList Submarine.enemies [ID#Enemy]}
-        {AdjoinList Submarine [enemies#Enemies]}
+        if {Value.hasFeature Submarine.enemies (ID.id)} == false then
+            Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0)]}
+            Updated = {AdjoinList Submarine [enemies#Up]}
+        else
+            Updated = Submarine
+        end
+        Enemy =   {AdjoinList Updated.enemies.(ID.id) Data}
+        Enemies = {AdjoinList Updated.enemies [(ID.id)#Enemy]}
+        {AdjoinList Updated [enemies#Enemies]}
     end
 %%% SayMove
     fun {SayMove ID Direction Submarine}
         EnemyDirection
     in
-        EnemyDirection = Direction | Submarine.enemies.ID.visited
+        if {Value.hasFeature Submarine.enemies (ID.id)} == false then
+            EnemyDirection = Direction | nil
+        else
+            EnemyDirection = Direction | Submarine.enemies.(ID.id).visited
+        end
         {UpdateEnemy ID Submarine [visited#EnemyDirection]}
     end
 %%% SaySurface
@@ -453,7 +465,7 @@ in
     end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
-        {System.show streamPlayer(player: Submarine.id.id stream:Stream.1)}
+        {System.show streamPlayer(player: Submarine stream:Stream.1)}
         case Stream
             of nil then skip
             []initPosition(ID Position)|S then SubmarineUpdated in 
@@ -483,6 +495,7 @@ in
                 {TreatStream S SubmarineUpdated} 
             []sayMove(ID Direction)|S then SubmarineUpdated in
                 SubmarineUpdated = {SayMove ID Direction Submarine}
+                {System.show SubmarineUpdated}
                 {TreatStream S SubmarineUpdated} 
             []saySurface(ID)|S then SubmarineUpdated in 
                 SubmarineUpdated = {SaySurface ID Submarine}
