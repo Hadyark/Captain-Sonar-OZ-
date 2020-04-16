@@ -126,7 +126,7 @@ in
       ID
       KindFire
    in 
-      {Send Player.port isDead(KindFire)}
+      {Send Player.port fireItem(ID KindFire)}
   
       case KindFire
       of null then {System.show main(func: askFire msg:kindFire var:KindFire)}
@@ -223,7 +223,7 @@ in
       {System.show main(func: turnByTurn msg:countAndnDeath vCount:Count vDeath:NDeath)}
       if NDeath == Input.nbPlayer -1 then {System.show main(func: turnByTurn msg:winnerIs var: Count)}
       else
-         {Send Players.Count.port isDead(IsDead)}%NE PAS LAISSER CA CEST POUR UN TEST
+         {Send Players.Count.port isDead(IsDead)}
          if IsDead then
             {TurnByTurn Count+1 Players NDeath+1}
          else 

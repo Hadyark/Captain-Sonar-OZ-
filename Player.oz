@@ -147,30 +147,31 @@ in
         Visit
         SubmarineUpdated
         PossibleDirection
-        Direction
+        Dir
     in
         {System.show player(func: move msg:myPosition var: Submarine.pt)}
         PossibleDirection = {CanMove Submarine [east north south west surface]}
         {System.show player(func: move msg:possibleDirection var: PossibleDirection)}
-        Direction = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
-        {System.show player(func: move msg:direction var: Direction )}
-        case Direction
+        Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
+        {System.show player(func: move msg:direction var: Dir )}
+        case Dir
         of surface then
-            ID = Submarine.id
             SubmarineUpdated = {AdjoinList Submarine [turnSurface#1 visited#nil]}
         else 
-            case Direction 
-            of east then NewPosition = pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1))
-            [] north then NewPosition = pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y))
-            [] south then NewPosition = pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y))
-            [] west then NewPosition = pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1))
+            case Dir 
+            of east then NewPosition = pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1)) 
+            [] north then NewPosition = pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y)) 
+            [] south then NewPosition = pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y)) 
+            [] west then NewPosition = pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1)) 
             end
-            ID = Submarine.id
             Visit = Submarine.pt | Submarine.visited
             {System.show player(func: move msg:newPosition var: NewPosition )}
             SubmarineUpdated = {AdjoinList Submarine [pt#NewPosition turnSurface#0 visited#Visit]} 
 
         end
+        ID = Submarine.id
+        Direction = Dir
+        {System.show debug(Direction)}
         SubmarineUpdated
     end
 %%% Dive
@@ -489,7 +490,7 @@ in
                 SubmarineUpdated = {InitPosition ID Position Submarine}
                 {TreatStream S SubmarineUpdated} 
             []move(ID Position Direction)|S then SubmarineUpdated in 
-                SubmarineUpdated = {Move ID Position Direction Submarine}
+                SubmarineUpdated = {Move ID Position Direction Submarine}{System.show debug(Direction)}
                 {TreatStream S SubmarineUpdated}  
             []dive|S then SubmarineUpdated in 
                 SubmarineUpdated = {Dive Submarine}
