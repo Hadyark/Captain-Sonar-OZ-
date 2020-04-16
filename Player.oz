@@ -8,7 +8,6 @@ export
 define
     StartPlayer
     TreatStream
-    SubmarineUpdated
 
     %%% FUNCTION / PROCEDURE %%%
     InitPosition
@@ -35,7 +34,6 @@ define
     InitSubmarine
     IsWater
     IsNotVisited
-    PossibleDirection
     DisponnibleItem
     UpdateEnemy
     DistanceDammage
@@ -79,11 +77,16 @@ in
     end
 %%% IsWater - Check is case contains water
     fun{IsWater Position}
-        {System.show player(func: isWater msg:position var:Position)}
-        if Position.x > 0 andthen Position.x < Input.nColumn then 
-            if Position.y > 0 andthen Position.y < Input.nRow then
-                {List.nth {List.nth Input.map Position.x} Position.y} == 0
+        if Position.x > 0 andthen Position.x =< Input.nColumn then 
+            if Position.y > 0 andthen Position.y =< Input.nRow then
+                if {List.nth {List.nth Input.map Position.x} Position.y} == 0 then
+                    true
+                else
+                    {System.show player(func: isWater msg:land)}
+                    false
+                end
             else
+                {System.show player(func: isWater msg:outOfMap)}
                 false
             end
         else
@@ -93,11 +96,10 @@ in
     end
 %%% IsNotVisited - Check if the case has been already visited
     fun{IsNotVisited Visited Position}
-        {System.show player(func: isNotVisited)}
-        if Visited == nil then {System.show player(func: isNotVisited msg:false)}  
+        if Visited == nil then
             true
         else 
-            if Visited.1.x == Position.x andthen Visited.1.y == Position.y then {System.show player(func: isNotVisited msg:true)} 
+            if Visited.1.x == Position.x andthen Visited.1.y == Position.y then {System.show player(func: isNotVisited msg:alreadyVisited)} 
                 false
             else {IsNotVisited Visited.2 Position}
             end
@@ -109,28 +111,28 @@ in
         case Directions 
         of nil then nil
         [] east | T then {System.show player(func: canMove msg:east)}
-            if {IsWater pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1))} 
+            if {IsWater pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y))} 
             andthen {IsNotVisited Submarine.visited pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1))} 
                 then {System.show player(func: canMove msg:addEast)}
                     east | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
         [] north | T then {System.show player(func: canMove msg:north)}
-            if {IsWater pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y))} 
+            if {IsWater pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1))} 
             andthen {IsNotVisited Submarine.visited pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y))} 
                 then {System.show player(func: canMove msg:addNorth)}
                     north | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
         [] south | T then{System.show player(func: canMove msg:south)}
-            if {IsWater pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y))} 
+            if {IsWater pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1))} 
             andthen {IsNotVisited Submarine.visited pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y))} 
                 then {System.show player(func: canMove msg:addSouth)}
                     south | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
         [] west | T then {System.show player(func: canMove msg:west)}
-            if {IsWater pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1))}
+            if {IsWater pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y))}
             andthen {IsNotVisited Submarine.visited pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1))} 
                 then {System.show player(func: canMove msg:addWest)}
                     west | {CanMove Submarine T} 
@@ -143,11 +145,12 @@ in
     fun {Move ID Position Direction Submarine} 
         NewPosition
         Visit
+        SubmarineUpdated
+        PossibleDirection
+        Direction
     in
-        {System.show player(func: move msg:zeub)}
-        
-        {System.show player(func: move msg:afterIf)}
-        PossibleDirection = {CanMove Submarine [east north south west east north south west surface]}
+        {System.show player(func: move msg:myPosition var: Submarine.pt)}
+        PossibleDirection = {CanMove Submarine [east north south west surface]}
         {System.show player(func: move msg:possibleDirection var: PossibleDirection)}
         Direction = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
         {System.show player(func: move msg:direction var: Direction )}
@@ -164,7 +167,9 @@ in
             end
             ID = Submarine.id
             Visit = Submarine.pt | Submarine.visited
+            {System.show player(func: move msg:newPosition var: NewPosition )}
             SubmarineUpdated = {AdjoinList Submarine [pt#NewPosition turnSurface#0 visited#Visit]} 
+
         end
         SubmarineUpdated
     end
@@ -176,26 +181,19 @@ in
     fun {ChargeItem ID KindItem Submarine} 
         Items
         Item
+        SubmarineUpdated
     in
-        {System.show player(func: chargeItem msg:first)}
-        %Items = [missile mine sonar drone]
-        Items = [missile]
-        {System.show player(func: chargeItem msg:items var:Items)}
+        Items = [missile mine sonar drone]
         Item = {List.nth Items 1}
-        {System.show player(func: chargeItem msg:item var:Item)}
         case Item 
-        of missile then {System.show player(func: chargeItem msg:beforeIf)}
+        of missile then
             if Submarine.missile == Input.missile then
-                {System.show player(func: chargeItem msg:afterIf)}
                 KindItem = null
             else
                 SubmarineUpdated = {AdjoinList Submarine [missile#Submarine.missile+1]}
-                {System.show player(func: chargeItem msg:afterElse)}
                 if SubmarineUpdated.missile == Input.missile then
-                    {System.show player(func: chargeItem msg:afterElseIf)}
                     KindItem = missile
                 else 
-                    {System.show player(func: chargeItem msg:afterElseELse)}
                     KindItem = null 
                 end
             end
@@ -235,33 +233,33 @@ in
     end
 %%% DisponnibleItem
     fun {DisponnibleItem Submarine List}
-        Label
-    in
-        Label = List.1
-        case Label
-        of missile then 
+
+        case List
+        of nil then skip
+            null | nil
+        [] missile | T then 
             if Submarine.missile == Input.missile then
-                Label| {DisponnibleItem Submarine List.2}
+                Label| {DisponnibleItem Submarine T}
             else 
-                {DisponnibleItem Submarine List.2}
+                {DisponnibleItem Submarine T}
             end
-        [] mine then 
+        [] mine | T then 
             if Submarine.mine == Input.mine then
-                Label| {DisponnibleItem Submarine List.2}
+                Label| {DisponnibleItem Submarine T}
             else 
-                {DisponnibleItem Submarine List.2}
+                {DisponnibleItem Submarine T}
             end
-        [] sonar then 
+        [] sonar | T then 
             if Submarine.sonar == Input.sonar then
-                Label| {DisponnibleItem Submarine List.2}
+                Label| {DisponnibleItem Submarine T}
             else 
-                {DisponnibleItem Submarine List.2}
+                {DisponnibleItem Submarine T}
             end
-        [] drone then 
+        [] drone | T then 
             if Submarine.drone == Input.drone then
-                Label| {DisponnibleItem Submarine List.2}
+                Label| {DisponnibleItem Submarine T}
             else 
-                {DisponnibleItem Submarine List.2}
+                {DisponnibleItem Submarine T}
             end
         end
     end
@@ -272,12 +270,12 @@ in
         Item
         Position
         ListMine
+        SubmarineUpdated
     in
-        {System.show player(func: fireItem)} 
         Items = {DisponnibleItem Submarine [missile mine sonar drone]}
-        {System.show player(func: fireItem masg: items var:Items)} 
+        {System.show player(func: fireItem msg:items var:Items)}
         Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )}
-        {System.show player(func: fireItem masg: item var:Item)} 
+        {System.show player(func: fireItem msg:item var:Item)}
         Position = pt(x:({OS.rand} mod Input.nRow +1) y:({OS.rand} mod Input.nColumn +1))
         case Item 
         of missile then 
@@ -306,9 +304,19 @@ in
     end
 %%% FireMine
     fun {FireMine ID Mine Submarine}
+        SubmarineUpdated
+        in
+        {System.show Submarine}
         ID= Submarine.id
-        Mine = Submarine.mines.1
-        {AdjoinList Submarine [mines#Submarine.mines.2]}
+        case Submarine.mines
+        of nil then {System.show debug1}
+            Mine = null
+            SubmarineUpdated = Submarine
+        [] H | T then {System.show debug2}
+            Mine = H
+            SubmarineUpdated = {AdjoinList Submarine [mines#T]}
+        end
+        SubmarineUpdated
     end    
 %%% IsDead
     fun {IsDead Answer Submarine}
@@ -321,27 +329,33 @@ in
         Updated
         Enemy
         Enemies
-    in
-        if {Value.hasFeature Submarine.enemies (ID.id)} == false then
-            Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0)]}
-            Updated = {AdjoinList Submarine [enemies#Up]}
+    in  
+        if ID == Submarine.id then Submarine
         else
-            Updated = Submarine
+            if {Value.hasFeature Submarine.enemies (ID.id)} == false then
+                Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0)]}
+                Updated = {AdjoinList Submarine [enemies#Up]}
+            else
+                Updated = Submarine
+            end
+            Enemy =   {AdjoinList Updated.enemies.(ID.id) Data}
+            Enemies = {AdjoinList Updated.enemies [(ID.id)#Enemy]}
+            {AdjoinList Updated [enemies#Enemies]}
         end
-        Enemy =   {AdjoinList Updated.enemies.(ID.id) Data}
-        Enemies = {AdjoinList Updated.enemies [(ID.id)#Enemy]}
-        {AdjoinList Updated [enemies#Enemies]}
     end
 %%% SayMove
     fun {SayMove ID Direction Submarine}
         EnemyDirection
     in
-        if {Value.hasFeature Submarine.enemies (ID.id)} == false then
-            EnemyDirection = Direction | nil
+        if ID == Submarine.id then Submarine
         else
-            EnemyDirection = Direction | Submarine.enemies.(ID.id).visited
+            if {Value.hasFeature Submarine.enemies (ID.id)} == false then
+                EnemyDirection = Direction | nil
+            else
+                EnemyDirection = Direction | Submarine.enemies.(ID.id).visited
+            end
+            {UpdateEnemy ID Submarine [visited#EnemyDirection]}
         end
-        {UpdateEnemy ID Submarine [visited#EnemyDirection]}
     end
 %%% SaySurface
     fun {SaySurface ID Submarine}
@@ -357,7 +371,8 @@ in
     end
 %%% DistanceDammage
     fun{DistanceDammage Position Message Submarine}
-        Distance 
+        Distance
+        SubmarineUpdated 
         in
         Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
         if Distance > 1 then
@@ -465,7 +480,9 @@ in
     end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
-        {System.show streamPlayer(player: Submarine stream:Stream.1)}
+        SubmarineUpdated
+    in
+        {System.show streamPlayer(player: Submarine aStream:Stream.1)}
         case Stream
             of nil then skip
             []initPosition(ID Position)|S then SubmarineUpdated in 
@@ -477,14 +494,10 @@ in
             []dive|S then SubmarineUpdated in 
                 SubmarineUpdated = {Dive Submarine}
                 {TreatStream S SubmarineUpdated}  
-            []chargeItem(ID KindItem)|S then SubmarineUpdated in
-                {System.show player(func: player msg:receiveChargeItem var:KindItem)}
-                SubmarineUpdated = Submarine %{ChargeItem ID KindItem Submarine}
-                ID = Submarine.id
-                KindItem = missile
-                {System.show player(func: fireItem msg:zub var:KindItem)} 
+            []chargeItem(ID KindItem)|S then SubmarineUpdated in 
+                SubmarineUpdated = {ChargeItem ID KindItem Submarine}{System.show debugCharge(SubmarineUpdated)}
                 {TreatStream S SubmarineUpdated}
-            []fireItem(ID KindFire)|S then SubmarineUpdated in 
+            []fireItem(ID KindFire)|S then SubmarineUpdated in {System.show debugFireItem(SubmarineUpdated)}
                 SubmarineUpdated = {FireItem ID KindFire Submarine}
                 {TreatStream S SubmarineUpdated} 
             []fireMine(ID Mine)|S then SubmarineUpdated in 
@@ -495,7 +508,6 @@ in
                 {TreatStream S SubmarineUpdated} 
             []sayMove(ID Direction)|S then SubmarineUpdated in
                 SubmarineUpdated = {SayMove ID Direction Submarine}
-                {System.show SubmarineUpdated}
                 {TreatStream S SubmarineUpdated} 
             []saySurface(ID)|S then SubmarineUpdated in 
                 SubmarineUpdated = {SaySurface ID Submarine}
@@ -531,8 +543,10 @@ in
                 SubmarineUpdated = {SayDamageTaken ID Damage LifeLeft Submarine}
                 {TreatStream S SubmarineUpdated}
             else
-                {System.show player(msg:badStream)} 
-                {TreatStream Stream.2 Submarine}
+                if {Value.hasFeature Submarine.enemies 2} then
+                    {System.show player(msg:badStream var:Stream.1)} 
+                    {TreatStream Stream.2 Submarine}
+                end
         end
     end
     fun{StartPlayer Color ID}
@@ -544,6 +558,7 @@ in
         thread
             Submarine = {InitSubmarine Color ID}
             {TreatStream Stream Submarine}
+            {System.show player(msg:treatStreamEnd)} 
         end
         Port
     end

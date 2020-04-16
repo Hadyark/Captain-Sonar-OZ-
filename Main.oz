@@ -12,6 +12,7 @@ define
     AskPosition
     AskCharge
     AskFire
+    AskFireMine
     Broadcast
     AskMove
     PlayTurn
@@ -70,6 +71,7 @@ in
       LifeLeft
       Answer
       Drone
+      Mine
    in 
       if Count > Input.nbPlayer then {System.show main(func: broadcast msg:done)}
       else
@@ -82,8 +84,8 @@ in
             [] sayDamageTaken(IDTouch Damage LifeLeft) then
                {Send Players.(ID.id).port Message}
             end
-         [] sayMineExplode(ID Position) then
-            {Send Players.Count.port sayMineExplode(ID Position Message)}
+         [] sayMineExplode(ID Mine) then
+            {Send Players.Count.port sayMineExplode(ID Mine Message)}
             {System.show main(func: broadcast msg:mineExplode var:Message)}
             case Message
             of null then skip
@@ -112,8 +114,8 @@ in
       KindItem
    in
       {Send Player.port chargeItem(ID KindItem)}
-      {System.show main(func: askCharge msg:askChargeSend var:KindItem)}
-      case KindItem of null then {System.show main(func: askCharge msg:kindItem var:null)}
+      case KindItem 
+      of null then {System.show main(func: askCharge msg:kindItem var:null)}
       [] _ then
          {System.show main(func: askCharge msg:kindItem var:KindItem)}
          {Broadcast 1 sayCharge(ID KindItem)}
@@ -124,22 +126,36 @@ in
       ID
       KindFire
    in 
-      {System.show main(func: askFire msg:player var:Player)}
-      {Send Player.port fireItem(ID KindFire)}
+      {Send Player.port isDead(KindFire)}
+  
       case KindFire
-      of null then skip
+      of null then {System.show main(func: askFire msg:kindFire var:KindFire)}
       [] mine(_) then 
          {System.show main(func: askFire msg:mine var:KindFire)}
-         {Broadcast 1 sayMinePlaced(ID)}{System.show main(func: askFire msg:2)}
+         {Broadcast 1 sayMinePlaced(ID)}
       [] missile(Position) then 
          {System.show main(func: askFire msg:missile var:KindFire)}
-         {Broadcast 1 sayMissileExplode(ID Position)}{System.show main(func: askFire msg:3)}
+         {Broadcast 1 sayMissileExplode(ID Position)}
       [] drone(_) then 
          {System.show main(func: askFire msg:drone var:KindFire)}
-         {Broadcast 1 sayPassingDrone(KindFire)}{System.show main(func: askFire msg:4)}
+         {Broadcast 1 sayPassingDrone(KindFire)}
       [] sonar then 
          {System.show main(func: askFire msg:sonar var:KindFire)}
-         {Broadcast 1 sayPassingSonar}{System.show main(func: askFire msg:5)}
+         {Broadcast 1 sayPassingSonar}
+      else
+         {System.show main(func: askFire msg:kindFire var:KindFire)}
+      end
+   end
+   proc{AskFireMine Player}
+      ID
+      Mine
+   in
+      {Send Player.port fireMine(ID Mine)}
+      case Mine
+      of null then {System.show main(func: askFireMine msg:mine var:Mine)}
+      [] mine(_) then 
+         {System.show main(func: askFireMine msg:mine var:Mine)}
+         {Broadcast 1 sayMineExplode(ID Mine)}
       end
    end
    %3 Ask the submarine to choose its direction
@@ -148,6 +164,7 @@ in
       Position
       Direction
       PlayerUpdated
+      Answer
    in
       {Send Player.port move(ID Position Direction)}
       %4 Surface has been chosen
@@ -167,7 +184,8 @@ in
          %Go 7
          {AskFire Player}{System.show main(func: askMove msg:askFireDone)}
          %8
-         {Broadcast 1 sayMineExplode(ID Position)}{System.show main(func: askMove msg:broadCastDone)}
+         {AskFireMine Player}{System.show main(func: askMove msg:askFireMineDone)}
+         
          PlayerUpdated = Player
       end
       PlayerUpdated
@@ -205,7 +223,7 @@ in
       {System.show main(func: turnByTurn msg:countAndnDeath vCount:Count vDeath:NDeath)}
       if NDeath == Input.nbPlayer -1 then {System.show main(func: turnByTurn msg:winnerIs var: Count)}
       else
-         {Send Players.Count.port isDead(IsDead)}
+         {Send Players.Count.port isDead(IsDead)}%NE PAS LAISSER CA CEST POUR UN TEST
          if IsDead then
             {TurnByTurn Count+1 Players NDeath+1}
          else 
