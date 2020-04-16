@@ -71,7 +71,7 @@ in
       Answer
       Drone
    in 
-      if Count > Input.nbPlayer then skip
+      if Count > Input.nbPlayer then {System.show main(func: broadcast msg:done)}
       else
          case Mess
          of sayMissileExplode(ID Position) then
@@ -112,10 +112,11 @@ in
       KindItem
    in
       {Send Player.port chargeItem(ID KindItem)}
-      {System.show main(func: askCharge msg:kindItem var:KindItem)}
-      case KindItem of null then skip
+      {System.show main(func: askCharge msg:askChargeSend var:KindItem)}
+      case KindItem of null then {System.show main(func: askCharge msg:kindItem var:null)}
       [] _ then
-         {Broadcast 1 chargeItem(ID KindItem)}
+         {System.show main(func: askCharge msg:kindItem var:KindItem)}
+         {Broadcast 1 sayCharge(ID KindItem)}
       end
    end
    %7 The submarine is now authorised to fire an item.
@@ -156,11 +157,11 @@ in
          PlayerUpdated = {AdjoinList Player [turnSurface#1]}
          {System.show main(func: askFire msg:5)}
       %5 The chosen direction is broadcast
-      else{System.show main(func: askMove msg:els)}
-         
+      else
+         {System.show main(func: askMove msg:broadcastDirection player: ID var:Direction)}
          {Broadcast 1 sayMove(ID Direction)}
          {Send PortGui movePlayer(ID Position)}
-         {System.show main(func: askMove msg:broadcastDirection var:Direction)}
+         {System.show main(func: askMove msg:askMoveDone)}
          %Go 6
          {AskCharge Player}{System.show main(func: askMove msg:askChargeDone)}
          %Go 7
