@@ -83,15 +83,21 @@ in
             [] sayDeath(IDTouch) then {Broadcast 1 sayDeath(IDTouch)}
             [] sayDamageTaken(IDTouch Damage LifeLeft) then
                {Send Players.(ID.id).port Message}
+               {Send PortGui lifeUpdate(IDTouch LifeLeft)}
+               {System.show main(func: broadcast msg:touched var:Message)}
             end
          [] sayMineExplode(ID Mine) then
             {Send Players.Count.port sayMineExplode(ID Mine Message)}
-            {System.show main(func: broadcast msg:mineExplode var:Message)}
+            {System.show main(func: broadcast msg:touched var:Message)}
             case Message
             of null then skip
-            [] sayDeath(IDTouch) then {Broadcast 1 sayDeath(IDTouch)}
+            [] sayDeath(IDTouch) then 
+               {Broadcast 1 sayDeath(IDTouch)}
+               {Send PortGui removePlayer(IDTouch)}
             [] sayDamageTaken(IDTouch Damage LifeLeft) then
                {Send Players.(ID.id).port Message}
+               {Send PortGui lifeUpdate(IDTouch LifeLeft)}
+               {System.show main(func: broadcast msg:done)}
             end
          [] sayPassingDrone(KindFire) then
             {Send Players.Count.port sayPassingDrone(KindFire ID Answer)}
@@ -112,50 +118,66 @@ in
    proc {AskCharge Player}
       ID
       KindItem
+      IsDead
    in
-      {Send Player.port chargeItem(ID KindItem)}
-      case KindItem 
-      of null then {System.show main(func: askCharge msg:kindItem var:null)}
-      [] _ then
-         {System.show main(func: askCharge msg:kindItem var:KindItem)}
-         {Broadcast 1 sayCharge(ID KindItem)}
+      {Send Player.port isDead(IsDead)}
+      if IsDead == false then
+         {Send Player.port chargeItem(ID KindItem)}
+         case KindItem 
+         of null then {System.show main(func: askCharge msg:kindItem var:null)}
+         [] _ then
+            {System.show main(func: askCharge msg:kindItem var:KindItem)}
+            {Broadcast 1 sayCharge(ID KindItem)}
+         end
       end
    end
    %7 The submarine is now authorised to fire an item.
    proc {AskFire Player}
       ID
       KindFire
+      IsDead
    in 
-      {Send Player.port fireItem(ID KindFire)}
-  
-      case KindFire
-      of null then {System.show main(func: askFire msg:kindFire var:KindFire)}
-      [] mine(_) then 
-         {System.show main(func: askFire msg:mine var:KindFire)}
-         {Broadcast 1 sayMinePlaced(ID)}
-      [] missile(Position) then 
-         {System.show main(func: askFire msg:missile var:KindFire)}
-         {Broadcast 1 sayMissileExplode(ID Position)}
-      [] drone(_) then 
-         {System.show main(func: askFire msg:drone var:KindFire)}
-         {Broadcast 1 sayPassingDrone(KindFire)}
-      [] sonar then 
-         {System.show main(func: askFire msg:sonar var:KindFire)}
-         {Broadcast 1 sayPassingSonar}
-      else
-         {System.show main(func: askFire msg:kindFire var:KindFire)}
+      {Send Player.port isDead(IsDead)}
+      if IsDead == false then
+         {Send Player.port fireItem(ID KindFire)}
+         case KindFire
+         of null then {System.show main(func: askFire msg:kindFire var:KindFire)}
+         [] pt(x:X y:Y) then 
+            {System.show main(func: askFire msg:fmine var:KindFire)}
+            {Broadcast 1 sayMinePlaced(ID)}
+            {Send PortGui putMine(ID KindFire)}
+         [] missile(Position) then 
+            {System.show main(func: askFire msg:fmissile var:KindFire)}
+            {Broadcast 1 sayMissileExplode(ID Position)}
+            {Send PortGui explosion(ID Position)}
+         [] drone(_) then 
+            {System.show main(func: askFire msg:fdrone var:KindFire)}
+            {Broadcast 1 sayPassingDrone(KindFire)}
+            {Send PortGui drone(ID KindFire)}
+         [] sonar then 
+            {System.show main(func: askFire msg:fsonar var:KindFire)}
+            {Broadcast 1 sayPassingSonar}
+            {Send PortGui sonar(ID)}
+         else
+            {System.show main(func: askFire msg:kindFire var:KindFire)}
+         end
       end
    end
    proc{AskFireMine Player}
       ID
       Mine
+      IsDead
    in
-      {Send Player.port fireMine(ID Mine)}
-      case Mine
-      of null then {System.show main(func: askFireMine msg:mine var:Mine)}
-      [] mine(_) then 
-         {System.show main(func: askFireMine msg:mine var:Mine)}
-         {Broadcast 1 sayMineExplode(ID Mine)}
+      {Send Player.port isDead(IsDead)}
+      if IsDead == false then
+         {Send Player.port fireMine(ID Mine)}
+         case Mine
+         of null then {System.show main(func: askFireMine msg:mine var:Mine)}
+         [] pt(x:X y:Y) then 
+            {Broadcast 1 sayMineExplode(ID Mine)}
+            {Send PortGui explosion(ID Mine)}
+            {Send PortGui removeMine(ID Mine)}
+         end
       end
    end
    %3 Ask the submarine to choose its direction
@@ -172,19 +194,24 @@ in
          {Broadcast 1 saySurface(ID)}
          {Send PortGui surface(ID)}
          PlayerUpdated = {AdjoinList Player [turnSurface#1]}
-         {System.show main(func: askFire msg:5)}
+         {System.show main(msg:playerIsSurface)}
+         {Delay 200}
       %5 The chosen direction is broadcast
       else
-         {System.show main(func: askMove msg:broadcastDirection player: ID var:Direction)}
+         {System.show main(func: askMove msg:broadcastDirection player: ID vPos: Position var:Direction)}
          {Broadcast 1 sayMove(ID Direction)}
          {Send PortGui movePlayer(ID Position)}
-         {System.show main(func: askMove msg:askMoveDone)}
+         {System.show main(msg:askMoveDone)}
+         {Delay 200}
          %Go 6
-         {AskCharge Player}{System.show main(func: askMove msg:askChargeDone)}
+         {AskCharge Player}{System.show main(msg:askChargeDone)}
+         {Delay 200}
          %Go 7
-         {AskFire Player}{System.show main(func: askMove msg:askFireDone)}
+         {AskFire Player}{System.show main(msg:askFireDone)}
+         {Delay 200}
          %8
-         {AskFireMine Player}{System.show main(func: askMove msg:askFireMineDone)}
+         {AskFireMine Player}{System.show main(msg:askFireMineDone)}
+         {Delay 200}
          
          PlayerUpdated = Player
       end
@@ -220,20 +247,23 @@ in
       PlayersUpdated
       IsDead
    in
-      {System.show main(func: turnByTurn msg:countAndnDeath vCount:Count vDeath:NDeath)}
+      {Delay 500}
+      {System.show main(msg:newTurn vCount:Count vDeath:NDeath)}
       if NDeath == Input.nbPlayer -1 then {System.show main(func: turnByTurn msg:winnerIs var: Count)}
       else
          {Send Players.Count.port isDead(IsDead)}
          if IsDead then
-            {TurnByTurn Count+1 Players NDeath+1}
+            if Count == Input.nbPlayer then {TurnByTurn 1 Players NDeath+1}
+            else {TurnByTurn Count+1 Players NDeath+1}
+            end
          else 
             PlayersUpdated = {AdjoinList Players [Count#{PlayTurn Players.Count}]}
-            {System.show main(func: turnByTurn msg:nextPlayer)}
             if Count == Input.nbPlayer then {TurnByTurn 1 PlayersUpdated 0}
             else {TurnByTurn Count+1 PlayersUpdated 0}
             end
          end
       end
    end
+   {Delay 3000}
    {TurnByTurn 1 Players 0}
 end

@@ -49,8 +49,8 @@ in
 
 %%%% Description of the map %%%%
 
-   NRow = 10
-   NColumn = 10
+   NRow = 4
+   NColumn = 4
 
    Map = [[0 0 0 0 0 0 0 0 0 0]
 	  [0 0 0 0 0 0 0 0 0 0]
@@ -67,7 +67,7 @@ in
 
    NbPlayer = 2
    Players = [player player] %playerBasicAI player
-   Colors = [yellow green]
+   Colors = [red green]
 
 %%%% Thinking parameters (only in simultaneous) %%%%
 
