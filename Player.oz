@@ -37,7 +37,7 @@ define
     DisponnibleItem
     UpdateEnemy
     DistanceDammage
-    
+    RandomFirePosition
 in
       
 %%% Initialize submarine
@@ -185,7 +185,7 @@ in
         SubmarineUpdated
     in
         Items = [missile mine sonar drone]
-        Item = {List.nth Items 4} %({OS.rand} mod ({List.length PossibleDirection}) + 1 )
+        Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )} %({OS.rand} mod ({List.length Items}) + 1 )
         case Item 
         of missile then
             if Submarine.missile == Input.missile then
@@ -268,12 +268,23 @@ in
             end
         end
     end
+%%% RandomFirePosition
+    fun{RandomFirePosition Min Max}
+        RPosition
+    in
+        RPosition = pt(x:({OS.rand} mod Max +1) y:({OS.rand} mod Max +1))
+        if {IsWater RPosition} then
+            RPosition
+        else
+            {RandomFirePosition Min Max}
+        end
+    end
+
 %%% FireItem
     fun {FireItem ID FireItem Submarine } 
         Rand
         Items
         Item
-        Position
         ListMine
         SubmarineUpdated
     in
@@ -281,14 +292,13 @@ in
         {System.show player(func: fireItem msg:items var:Items)}
         Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )}
         {System.show player(func: fireItem msg:item var:Item)}
-        Position = pt(x:({OS.rand} mod Input.nRow +1) y:({OS.rand} mod Input.nColumn +1))
         case Item 
         of missile then 
-            FireItem = missile(Position)
+            FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile})
             SubmarineUpdated = {AdjoinList Submarine [missile#0]}
         [] mine then 
-            FireItem = Position
-            ListMine =  Position | Submarine.mines
+            FireItem = {RandomFirePosition Input.minDistanceMine Input.minDistanceMine}
+            ListMine =  FireItem | Submarine.mines
             SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
         [] sonar then 
             FireItem = sonar
@@ -297,9 +307,9 @@ in
             SubmarineUpdated = {AdjoinList Submarine [drone#0]}
             Rand = ({OS.rand} mod 2 )
             if Rand == 1 then
-                FireItem = drone(row Position.x)
+                FireItem = drone(row ({OS.rand} mod Input.nRow +1))
             else
-                FireItem = drone(column Position.y)
+                FireItem = drone(column ({OS.rand} mod Input.nColumn +1))
             end
         else
             FireItem = null
@@ -433,7 +443,8 @@ in
                 Answer = false
             end
         end
-        {UpdateEnemy ID Submarine [drone#false]}
+        {System.show passing(Drone ID Answer)}
+        Submarine
     end
 %%% SayAnswerDrone
     fun {SayAnswerDrone Drone ID Answer Submarine}
@@ -447,6 +458,7 @@ in
         else
             SubmarineUpdated = Submarine
         end
+        {System.show answer(Drone ID Answer)}
         SubmarineUpdated
     end
 %%% SayPassingSonar
