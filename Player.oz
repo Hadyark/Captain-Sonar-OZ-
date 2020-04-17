@@ -185,7 +185,7 @@ in
         SubmarineUpdated
     in
         Items = [missile mine sonar drone]
-        Item = {List.nth Items 2} %({OS.rand} mod ({List.length PossibleDirection}) + 1 )
+        Item = {List.nth Items 4} %({OS.rand} mod ({List.length PossibleDirection}) + 1 )
         case Item 
         of missile then
             if Submarine.missile == Input.missile then
@@ -453,9 +453,9 @@ in
     fun {SayPassingSonar ID Answer Submarine}
         ID = Submarine.id
         if ({OS.rand} mod 2) == 1 then
-            Answer = pt(x:Submarine.pt.x y:({OS.rand} mod Input.nColumn))
+            Answer = pt(x:Submarine.pt.x y:({OS.rand} mod (Input.nColumn) + 1 ))
         else
-            Answer = pt(x:({OS.rand} mod Input.nRow) y:Submarine.pt.y)
+            Answer = pt(x:({OS.rand} mod (Input.nRow) + 1 ) y:Submarine.pt.y)
         end
         Submarine
     end
