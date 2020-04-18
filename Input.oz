@@ -44,7 +44,7 @@ define
    MaxDistanceMissile
    GUIDelay
 
-   GenereateMap
+   GenerateMap
    NewRow
    PickMap
 in
@@ -61,7 +61,7 @@ in
    fun {NewRow Row1 Row2}
         [Row1.1 Row1.2.1 Row1.2.2.1 Row1.2.2.2.1 Row1.2.2.2.2.1 Row2.1 Row2.2.1 Row2.2.2.1 Row2.2.2.2.1 Row2.2.2.2.2.1]
     end
-    fun {GenereateMap Map1 Map2 Map3 Map4}
+    fun {GenerateMap Map1 Map2 Map3 Map4}
         [
         {NewRow Map1.1 Map2.1}
         {NewRow Map1.2.1 Map2.2.1}
@@ -141,7 +141,7 @@ in
          ]
         {List.nth ListMap ({OS.rand} mod ({List.length ListMap}) + 1 )}
     end
-    Map={GenereateMap {PickMap} {PickMap} {PickMap} {PickMap}}
+    Map={GenerateMap {PickMap} {PickMap} {PickMap} {PickMap}}
 
 %%%% Players description %%%%
 
