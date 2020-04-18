@@ -1,4 +1,6 @@
 functor
+import
+	OS
 export
    isTurnByTurn:IsTurnByTurn
    nRow:NRow
@@ -41,6 +43,10 @@ define
    MinDistanceMissile
    MaxDistanceMissile
    GUIDelay
+
+   GenereateMap
+   NewRow
+   PickMap
 in
 
 %%%% Style of game %%%%
@@ -49,19 +55,93 @@ in
 
 %%%% Description of the map %%%%
 
-   NRow = 4
-   NColumn = 4
+   NRow = 10
+   NColumn = 10
 
-   Map = [[0 0 0 0 0 0 0 0 0 0]
-	  [0 0 0 0 0 0 0 0 0 0]
-	  [0 0 0 1 1 0 0 0 0 0]
-	  [0 0 1 1 0 0 1 0 0 0]
-	  [0 0 0 0 0 0 0 0 0 0]
-	  [0 0 0 0 0 0 0 0 0 0]
-	  [0 0 0 1 0 0 1 1 0 0]
-	  [0 0 1 1 0 0 1 0 0 0]
-	  [0 0 0 0 0 0 0 0 0 0]
-	  [0 0 0 0 0 0 0 0 0 0]]
+   fun {NewRow Row1 Row2}
+        [Row1.1 Row1.2.1 Row1.2.2.1 Row1.2.2.2.1 Row1.2.2.2.2.1 Row2.1 Row2.2.1 Row2.2.2.1 Row2.2.2.2.1 Row2.2.2.2.2.1]
+    end
+    fun {GenereateMap Map1 Map2 Map3 Map4}
+        [
+        {NewRow Map1.1 Map2.1}
+        {NewRow Map1.2.1 Map2.2.1}
+        {NewRow Map1.2.2.1 Map2.2.2.1}
+        {NewRow Map1.2.2.2.1 Map2.2.2.2.1}
+        {NewRow Map1.2.2.2.2.1 Map2.2.2.2.2.1}
+        {NewRow Map3.1 Map4.1}
+        {NewRow Map3.2.1 Map4.2.1}
+        {NewRow Map3.2.2.1 Map4.2.2.1}
+        {NewRow Map3.2.2.2.1 Map4.2.2.2.1}
+        {NewRow Map3.2.2.2.2.1 Map4.2.2.2.2.1}
+        ]
+    end
+    fun {PickMap}
+        ListMap
+      in
+         ListMap = [
+            [[0 0 0 0 0]
+            [0 1 1 0 1]
+            [0 0 1 0 1]
+            [0 0 1 0 0]
+            [0 0 0 0 0]]
+
+            [[0 1 0 0 0]
+            [0 0 0 0 0]
+            [0 0 1 0 1]
+            [0 1 1 0 0]
+            [0 1 0 0 0]]
+
+            [[0 0 0 0 0]
+            [0 0 1 1 0]
+            [0 0 1 1 0]
+            [0 1 0 0 0]
+            [0 0 0 0 0]]
+
+            [[0 0 0 0 0]
+            [0 1 1 1 0]
+            [0 0 0 0 0]
+            [0 0 1 1 0]
+            [0 1 1 0 0]]
+
+            [[0 0 1 0 0]
+            [1 0 1 0 0]
+            [1 1 0 0 0]
+            [0 1 0 1 0]
+            [0 0 0 0 0]]
+
+            [[0 0 1 1 0]
+            [0 1 0 0 0]
+            [0 0 0 1 0]
+            [1 0 1 0 0]
+            [0 0 1 0 0]]
+
+            [[0 0 0 1 0]
+            [0 0 1 0 0]
+            [0 1 1 1 0]
+            [0 0 1 0 0]
+            [0 0 0 0 0]]
+
+            [[0 0 0 0 0]
+            [0 1 1 0 0]
+            [0 0 1 1 1]
+            [0 0 0 0 0]
+            [0 1 0 0 0]]
+
+            [[0 0 0 0 0]
+            [0 0 1 0 0]
+            [0 1 0 0 0]
+            [1 0 0 1 0]
+            [0 0 0 0 0]]
+
+            [[0 0 0 0 0]
+            [0 1 0 1 0]
+            [0 0 0 1 0]
+            [0 1 0 1 0]
+            [0 0 0 0 0]]
+         ]
+        {List.nth ListMap ({OS.rand} mod ({List.length ListMap}) + 1 )}
+    end
+    Map={GenereateMap {PickMap} {PickMap} {PickMap} {PickMap}}
 
 %%%% Players description %%%%
 
