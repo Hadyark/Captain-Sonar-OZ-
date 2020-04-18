@@ -77,9 +77,10 @@ in
     end
 %%% IsWater - Check is case contains water
     fun{IsWater Position}
+        {System.show player(func: isWater msg:Position)}
         if Position.x > 0 andthen Position.x =< Input.nRow then 
             if Position.y > 0 andthen Position.y =< Input.nColumn then
-                if {List.nth {List.nth Input.map Position.y} Position.x} == 0 then
+                if {List.nth {List.nth Input.map Position.x} Position.y} == 0 then
                     true
                 else
                     {System.show player(func: isWater msg:land)}
@@ -269,14 +270,30 @@ in
         end
     end
 %%% RandomFirePosition
-    fun{RandomFirePosition Min Max}
-        RPosition
-    in
-        RPosition = pt(x:({OS.rand} mod Max +1) y:({OS.rand} mod Max +1))
-        if {IsWater RPosition} then
-            RPosition
+    fun{RandomFirePosition Min Max Submarine}
+        RX
+        RY
+        Choice
+        Position
+        Distance
+    in %{Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
+        RX = ({OS.rand} mod (Max +1))
+        RY = ({OS.rand} mod (Max +1))
+        Choice = ({OS.rand} mod 4)
+        case Choice
+        of 0 then Position = pt(x:(Submarine.pt.x +RX) y:(Submarine.pt.y +RY))
+        [] 1 then Position = pt(x:(Submarine.pt.x +RX) y:(Submarine.pt.y -RY))
+        [] 2 then Position = pt(x:(Submarine.pt.x -RX) y:(Submarine.pt.y +RY))
+        [] 3 then Position = pt(x:(Submarine.pt.x -RX) y:(Submarine.pt.y -RY))
+        end
+        Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
+        {System.show player(func: distanceSub msg:Submarine.pt)}
+        {System.show player(func: distancePT msg:Position)}
+        {System.show player(func: distance msg:Distance)}
+        if {IsWater Position} andthen Distance > Min andthen Distance =< Max then
+            Position
         else
-            {RandomFirePosition Min Max}
+            {RandomFirePosition Min Max Submarine}
         end
     end
 
@@ -294,10 +311,10 @@ in
         {System.show player(func: fireItem msg:item var:Item)}
         case Item 
         of missile then 
-            FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile})
+            FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile Submarine})
             SubmarineUpdated = {AdjoinList Submarine [missile#0]}
         [] mine then 
-            FireItem = {RandomFirePosition Input.minDistanceMine Input.minDistanceMine}
+            FireItem = {RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine}
             ListMine =  FireItem | Submarine.mines
             SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
         [] sonar then 
@@ -396,7 +413,7 @@ in
     fun{DistanceDammage Position Message Submarine}
         Distance
         SubmarineUpdated 
-        in              %   2               1  = 1                     2               1   =1
+        in
         Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
         if Distance > 1 then
             SubmarineUpdated = Submarine

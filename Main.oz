@@ -80,7 +80,10 @@ in
             {Send Players.Receiver.port sayMissileExplode(ID Position Message)}
             case Message
             of null then skip
-            [] sayDeath(IDTouch) then {Broadcast sayDeath(IDTouch) PortSender 1}
+            [] sayDeath(IDTouch) then 
+               {Broadcast sayDeath(IDTouch) PortSender 1}
+               {Send PortGui removePlayer(IDTouch)}
+               {Send PortGui lifeUpdate(IDTouch LifeLeft)}
             [] sayDamageTaken(IDTouch Damage LifeLeft) then
                {Send PortSender Message}
                {Send PortGui lifeUpdate(IDTouch LifeLeft)}
@@ -196,23 +199,23 @@ in
          {Send PortGui surface(ID)}
          PlayerUpdated = {AdjoinList Player [turnSurface#1]}
          {System.show main(msg:playerIsSurface)}
-         {Delay 200}
+         {Delay 100}
       %5 The chosen direction is broadcast
       else
          {System.show main(func: askMove msg:broadcastDirection player: ID vPos: Position var:Direction)}
          {Broadcast sayMove(ID Direction) Player.port 1}
          {Send PortGui movePlayer(ID Position)}
          {System.show main(msg:askMoveDone)}
-         {Delay 200}
+         {Delay 100}
          %Go 6
          {AskCharge Player}{System.show main(msg:askChargeDone)}
-         {Delay 200}
+         {Delay 100}
          %Go 7
          {AskFire Player}{System.show main(msg:askFireDone)}
-         {Delay 200}
+         {Delay 100}
          %8
          {AskFireMine Player}{System.show main(msg:askFireMineDone)}
-         {Delay 200}
+         {Delay 100}
          
          PlayerUpdated = Player
       end
