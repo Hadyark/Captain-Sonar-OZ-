@@ -141,7 +141,12 @@ in
                 west | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
-        [] surface | T then surface | {CanMove Submarine T} 
+        [] surface | T then 
+            if Submarine.visited == nil then
+                {CanMove Submarine T}
+            else
+                surface | {CanMove Submarine T}
+            end
         end
     end
 %%% Move - submarine
@@ -152,7 +157,7 @@ in
         Dir
     in
         {System.show player(func: move msg:myPosition var: Submarine.pt)}
-        PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface]}
+        PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
         {System.show player(func: move msg:possibleDirection var: PossibleDirection)}
         Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
         {System.show player(func: move msg:direction var: Dir )}

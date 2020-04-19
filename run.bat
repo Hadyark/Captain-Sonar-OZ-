@@ -1,0 +1,2 @@
+ozengine Main.ozf
+pause
