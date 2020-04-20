@@ -38,14 +38,23 @@ define
     UpdateEnemy
     DistanceDammage
     RandomFirePosition
+
+    %%% ADVANCED AI
+    GeneratePossiblesPositions
+    ValidPath
+    CheckPoints
+    RemovePoint
+    CheckPositionsEvery
+    FirePosition
+    UpdatePossiblesPositions
 in
       
 %%% Initialize submarine
     fun {InitSubmarine Color ID}
         Submarine
-    in
+        in
         Submarine = submarine(
-            id: id(id: ID color: Color name: random)
+            id: id(id: ID color: Color name: xxD4rkPulv3r1sat0rxx)
             turnSurface: Input.turnSurface
             visited: nil
             missile:0 
@@ -55,6 +64,8 @@ in
             mines: nil
             life: Input.maxDamage
             enemies: enemies()
+            sonarLaunched:0
+            lastMissile:null
         )
         Submarine
     end  
@@ -63,7 +74,7 @@ in
         Pos
         SubmarineUpdated
         Bool
-    in
+        in
         Pos = pt(x:({OS.rand} mod (Input.nRow) + 1 ) y:({OS.rand} mod (Input.nColumn) + 1 ))
         Bool= {IsWater Pos}
         if Bool then
@@ -77,17 +88,14 @@ in
     end
 %%% IsWater - Check is case contains water
     fun{IsWater Position}
-        {System.show player(func: isWater msg:Position)}
         if Position.x > 0 andthen Position.x =< Input.nRow then 
             if Position.y > 0 andthen Position.y =< Input.nColumn then
                 if {List.nth {List.nth Input.map Position.x} Position.y} == 0 then
                     true
                 else
-                    {System.show player(func: isWater msg:land)}
                     false
                 end
             else
-                {System.show player(func: isWater msg:outOfMap)}
                 false
             end
         else
@@ -100,7 +108,7 @@ in
         if Visited == nil then
             true
         else 
-            if Visited.1.x == Position.x andthen Visited.1.y == Position.y then {System.show player(func: isNotVisited msg:alreadyVisited)} 
+            if Visited.1.x == Position.x andthen Visited.1.y == Position.y then 
                 false
             else {IsNotVisited Visited.2 Position}
             end
@@ -109,35 +117,30 @@ in
 %%% CanMove - Possible Move
     fun{CanMove Submarine Directions}
         Pt
-    in
-        {System.show player(func: canMove msg:directions var: Directions)}
+        in
         case Directions 
         of nil then nil
-        [] east | T then {System.show player(func: canMove msg:east)}
+        [] east | T then
             Pt = pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1))
             if {IsWater Pt} andthen {IsNotVisited Submarine.visited Pt} then
-                    {System.show player(func: canMove msg:addEast)}
                     east | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
-        [] north | T then {System.show player(func: canMove msg:north)}
+        [] north | T then
             Pt = pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y))
             if {IsWater Pt} andthen {IsNotVisited Submarine.visited Pt} then
-                {System.show player(func: canMove msg:addNorth)}
                     north | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
-        [] south | T then{System.show player(func: canMove msg:south)}
+        [] south | T then
             Pt = pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y))
-            if {IsWater Pt} andthen {IsNotVisited Submarine.visited Pt} then
-                {System.show player(func: canMove msg:addSouth)}
+            if {IsWater Pt} andthen {IsNotVisited Submarine.visited Pt} then                
                 south | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
-        [] west | T then {System.show player(func: canMove msg:west)}
+        [] west | T then
             Pt = pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1))
             if {IsWater Pt} andthen {IsNotVisited Submarine.visited Pt} then
-                {System.show player(func: canMove msg:addWest)}
                 west | {CanMove Submarine T} 
             else {CanMove Submarine T}
             end
@@ -155,12 +158,9 @@ in
         SubmarineUpdated
         PossibleDirection
         Dir
-    in
-        {System.show player(func: move msg:myPosition var: Submarine.pt)}
+        in
         PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
-        {System.show player(func: move msg:possibleDirection var: PossibleDirection)}
         Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
-        {System.show player(func: move msg:direction var: Dir )}
         case Dir
         of surface then
             SubmarineUpdated = {AdjoinList Submarine [turnSurface#1 visited#nil]}
@@ -172,7 +172,6 @@ in
             [] west then Position = pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1)) 
             end
             Visit = Submarine.pt | Submarine.visited
-            {System.show player(func: move msg:newPosition var: Position )}
             SubmarineUpdated = {AdjoinList Submarine [pt#Position turnSurface#0 visited#Visit]} 
 
         end
@@ -186,12 +185,14 @@ in
     end
 %%% ChargeItem
     fun {ChargeItem ID KindItem Submarine} 
-        Items
         Item
         SubmarineUpdated
-    in
-        Items = [missile mine sonar drone]
-        Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )} %({OS.rand} mod ({List.length Items}) + 1 )
+        in
+        if Submarine.sonarLaunched == 0 then
+            Item = sonar
+        else 
+            Item = missile
+        end
         case Item 
         of missile then
             if Submarine.missile == Input.missile then
@@ -244,7 +245,6 @@ in
     end
 %%% DisponnibleItem
     fun {DisponnibleItem Submarine List}
-
         case List
         of nil then skip
             null | nil
@@ -281,7 +281,7 @@ in
         Choice
         Position
         Distance
-    in %{Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
+        in %{Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
         RX = ({OS.rand} mod (Max +1))
         RY = ({OS.rand} mod (Max +1))
         Choice = ({OS.rand} mod 4)
@@ -292,9 +292,6 @@ in
         [] 3 then Position = pt(x:(Submarine.pt.x -RX) y:(Submarine.pt.y -RY))
         end
         Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
-        {System.show player(func: distanceSub msg:Submarine.pt)}
-        {System.show player(func: distancePT msg:Position)}
-        {System.show player(func: distance msg:Distance)}
         if {IsWater Position} andthen Distance > Min andthen Distance =< Max then
             Position
         else
@@ -305,26 +302,39 @@ in
 %%% FireItem
     fun {FireItem ID FireItem Submarine } 
         Rand
-        Items
         Item
         ListMine
         SubmarineUpdated
-    in
-        Items = {DisponnibleItem Submarine [missile mine sonar drone]}
-        {System.show player(func: fireItem msg:items var:Items)}
-        Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )}
-        {System.show player(func: fireItem msg:item var:Item)}
+        Position
+        Possibles
+        in
+        Possibles = {CheckPositionsEvery Submarine.enemies 1 1} 
+        {System.show fireItem(Possibles)}
+        Position = {FirePosition Possibles Submarine Input.minDistanceMissile Input.maxDistanceMissile}
+        {System.show fireItem(Position)}
+        if Submarine.missile == Input.missile then
+            if Position == nil then
+                Item = null
+            else
+                Item = missile
+            end
+        else 
+            if Submarine.sonar == Input.sonar then
+                Item = sonar
+            else Item = null
+            end
+        end
         case Item 
-        of missile then 
-            FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile Submarine})
-            SubmarineUpdated = {AdjoinList Submarine [missile#0]}
+        of missile then
+            FireItem = missile(Position)
+            SubmarineUpdated = {AdjoinList Submarine [missile#0 lastMissile#Position]}
         [] mine then 
             FireItem = {RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine}
             ListMine =  FireItem | Submarine.mines
             SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
         [] sonar then 
             FireItem = sonar
-            SubmarineUpdated = {AdjoinList Submarine [sonar#0]}
+            SubmarineUpdated = {AdjoinList Submarine [sonar#0 sonarLaunched#Submarine.sonarLaunched+1]}
         [] drone then 
             SubmarineUpdated = {AdjoinList Submarine [drone#0]}
             Rand = ({OS.rand} mod 2 )
@@ -344,7 +354,6 @@ in
     fun {FireMine ID Mine Submarine}
         SubmarineUpdated
         in
-        {System.show Submarine}
         ID= Submarine.id
         case Submarine.mines
         of nil then
@@ -367,11 +376,11 @@ in
         Updated
         Enemy
         Enemies
-    in  
+        in  
         if ID == Submarine.id then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
-                Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0)]}
+                Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0 possiblesPositions:nil)]}
                 Updated = {AdjoinList Submarine [enemies#Up]}
             else
                 Updated = Submarine
@@ -384,15 +393,18 @@ in
 %%% SayMove
     fun {SayMove ID Direction Submarine}
         EnemyDirection
-    in
+        UpdatedPossiblesPositions
+        in
         if ID == Submarine.id then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 EnemyDirection = Direction | nil
+                UpdatedPossiblesPositions = nil
             else
                 EnemyDirection = Direction | Submarine.enemies.(ID.id).visited
+                UpdatedPossiblesPositions = {UpdatePossiblesPositions Direction Submarine.enemies.(ID.id).possiblesPositions}
             end
-            {UpdateEnemy ID Submarine [visited#EnemyDirection]}
+            {UpdateEnemy ID Submarine [visited#EnemyDirection possiblesPositions#UpdatedPossiblesPositions]}
         end
     end
 %%% SaySurface
@@ -415,7 +427,7 @@ in
         end
     end
 %%% DistanceDammage
-    fun{DistanceDammage Position Message Submarine}
+    fun {DistanceDammage Position Message Submarine}
         Distance
         SubmarineUpdated 
         in
@@ -465,13 +477,12 @@ in
                 Answer = false
             end
         end
-        {System.show passing(Drone ID Answer)}
         Submarine
     end
 %%% SayAnswerDrone
     fun {SayAnswerDrone Drone ID Answer Submarine}
         SubmarineUpdated
-    in
+        in
         case Drone
         of drone(row X) then
             SubmarineUpdated = {UpdateEnemy ID Submarine [lastX#X]}
@@ -480,7 +491,6 @@ in
         else
             SubmarineUpdated = Submarine
         end
-        {System.show answer(Drone ID Answer)}
         SubmarineUpdated
     end
 %%% SayPassingSonar
@@ -495,7 +505,10 @@ in
     end
 %%% SayAnswerSonar
     fun {SayAnswerSonar ID Answer Submarine}
-        {UpdateEnemy ID Submarine [possibleX#Answer.x possibleY#Answer.y]}
+        if ID.id == Submarine.id.id then Submarine
+        else
+            {UpdateEnemy ID Submarine [possiblesPositions#{GeneratePossiblesPositions Answer 1 1}]}
+        end
     end
 %%% SayDeath
     fun {SayDeath ID Submarine}
@@ -503,7 +516,135 @@ in
     end
 %%% SayDamageTaken
     fun {SayDamageTaken ID Damage LifeLeft Submarine}
-        {UpdateEnemy ID Submarine [life#LifeLeft]}
+        NewList
+        N
+        S 
+        W 
+        E 
+        in
+        if Damage == null then 
+            NewList = {RemovePoint Submarine.lastMissile Submarine.(ID.id).possiblesPositions}
+            {UpdateEnemy ID Submarine [possiblesPositions#NewList]}
+        else
+            if Damage == 2 then
+                NewList = [Submarine.lastMissile]
+                {UpdateEnemy ID Submarine [life#LifeLeft possiblesPositions#NewList]}
+            else
+                N = pt(x: Submarine.lastMissile.x-1 y:Submarine.lastMissile.y)
+                S = pt(x: Submarine.lastMissile.x+1 y:Submarine.lastMissile.y)
+                W = pt(x: Submarine.lastMissile.x   y:Submarine.lastMissile.y-1)
+                E = pt(x: Submarine.lastMissile.x   y:Submarine.lastMissile.y+1)
+                
+                {UpdateEnemy ID Submarine [life#LifeLeft possiblesPositions#[N S W E]]}
+            end
+        end
+    end
+
+%%%%%%%%%%%% ADVANCED AI %%%%%%%%%%%%%%%%%%%%
+    fun {GeneratePossiblesPositions Answer CountX CountY} %sayAnswerSonar
+        if CountY > 10 then
+            if CountX > 10 then
+                nil
+            else
+                if {IsWater pt(x:CountX y:Answer.y)} then{System.show generatePossiblesPositions(pt(x:CountX y:Answer.y))}
+                    pt(x:CountX y:Answer.y) | {GeneratePossiblesPositions Answer CountX+1 CountY}
+                else {GeneratePossiblesPositions Answer CountX+1 CountY}
+                end
+            end
+        else   
+            if {IsWater pt(x:Answer.x y:CountY)} then{System.show generatePossiblesPositions(pt(x:Answer.x y:CountY))}
+                pt(x:Answer.x y:CountY) | {GeneratePossiblesPositions Answer CountX CountY+1}
+            else {GeneratePossiblesPositions Answer CountX CountY+1}
+            end
+        end
+    end
+
+    fun{ValidPath Directions Point}
+        NewPoint   
+        in
+        if {IsWater Point} then
+            case Directions
+            of nil then true
+            [] Dir | T then 
+                if Dir == north then NewPoint = pt(x:Point.x+1 y:Point.y) end
+                if Dir == south then NewPoint = pt(x:Point.x-1 y:Point.y) end
+                if Dir == east then NewPoint = pt(x:Point.x y:Point.y-1) end
+                if Dir == west then NewPoint = pt(x:Point.x y:Point.y+1) end
+                {ValidPath T NewPoint}
+            end
+        else
+            false
+        end
+    end
+
+    fun {CheckPoints Directions ListPoints}       {System.show checkPoints(Directions)}
+        case ListPoints
+        of nil then nil
+        [] Point | T then 
+            if {ValidPath Directions Point} then{System.show checkPoints(valid:Directions)}
+                Point | {CheckPoints Directions T}
+            else
+                {CheckPoints Directions T}
+            end
+        end
+    end
+    fun {RemovePoint Point ListPoints}
+        case ListPoints
+        of nil then nil
+        [] Pt | T then 
+            if Pt \= Point then
+                Pt | {RemovePoint Point T}
+            else
+               {RemovePoint Point T}
+            end
+        end
+    end
+
+    fun{UpdatePossiblesPositions Direction ListPoints} %sayMove
+        Return
+    in
+        case ListPoints
+        of nil then nil
+        [] Point | T then 
+            if Direction == north then Return = pt(x:Point.x-1 y:Point.y) | {UpdatePossiblesPositions Direction T} end
+            if Direction == south then Return = pt(x:Point.x+1 y:Point.y) | {UpdatePossiblesPositions Direction T} end
+            if Direction == east then  Return = pt(x:Point.x y:Point.y+1) | {UpdatePossiblesPositions Direction T} end
+            if Direction == west then  Return = pt(x:Point.x y:Point.y-1) | {UpdatePossiblesPositions Direction T} end
+            Return
+        end
+    end
+
+    fun{CheckPositionsEvery Enemies Count ID}
+        {System.show debugCheckPositionsEvery(Enemies Count)}
+        if Enemies == enemies then nil 
+        else
+            if {Value.hasFeature Enemies ID} then 
+                if Count == {Record.width Enemies} then
+                    {CheckPoints Enemies.ID.visited Enemies.ID.possiblesPositions}
+                else
+                    {AdjoinList {CheckPoints Enemies.ID.visited Enemies.ID.possiblesPositions} {CheckPositionsEvery Enemies Count+1 ID+1}}
+                end
+            else
+                {CheckPositionsEvery Enemies Count ID+1}
+            end
+            
+        end
+    end
+    
+    fun{FirePosition ListPoints Submarine Min Max}
+        Distance
+        in
+        case ListPoints
+        of nil then nil
+        [] Position | T then
+            Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
+            {System.show firePosition(sub: Submarine.pt)}
+            {System.show firePosition(pos: Position)}
+            {System.show firePosition(diss: Distance)}
+            if Distance > Min andthen Distance =< Max then Position
+            else {FirePosition T Submarine Min Max}
+            end
+        end
     end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
@@ -551,7 +692,6 @@ in
                 {TreatStream S SubmarineUpdated}
             []sayMineExplode(ID Position Message)|S then SubmarineUpdated in 
                 SubmarineUpdated = {SayMineExplode ID Position Message Submarine}
-                {System.show streamPlayer(player: SubmarineUpdated)}
                 {TreatStream S SubmarineUpdated}
             []sayPassingDrone(Drone ID Answer)|S then SubmarineUpdated in 
                 SubmarineUpdated = {SayPassingDrone Drone ID Answer Submarine}
