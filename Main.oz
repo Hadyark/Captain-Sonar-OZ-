@@ -1,23 +1,29 @@
 functor
 import
-    GUI
-    Input
-    PlayerManager
-    System
+   GUI
+   Input
+   PlayerManager
+   System
+   OS
 define
-    PortGui
-    Players
+   PortGui
+   Players
 
-    CreatePlayer
-    AskPosition
-    AskCharge
-    AskFire
-    AskFireMine
-    Broadcast
-    AskMove
-    PlayTurn
+   CreatePlayer
+   AskPosition
+   AskCharge
+   AskFire
+   AskFireMine
+   Broadcast
+   AskMove
+   PlayTurn
    TurnByTurn
 
+   %%% Simulataneous
+   Start
+   SimultaneousTurn
+   PlaySimultaneousTurn
+   SimulateThinking
 in
 %%% 1) Create the port for the GUI and launch its interface
    PortGui = {GUI.portWindow}
@@ -61,6 +67,18 @@ in
 %%% 4) When every player has set up, launch the game 
 %%% (either in turn by turn or in simultaneous mode, 
 %%% as specified by the input file)
+   proc{SimulateThinking Player}
+      Value PlayerUpdated
+   in
+      if Input.isTurnByTurn == false then
+         if Player.turnSurface == 0 then
+            Value = Input.thinkMin + ({OS.rand} mod (Input.thinkMax - Input.thinkMin))
+         else
+            Value = Input.turnSurface *1000 div 3
+         end
+         {Delay Value}
+      end
+   end 
 
    proc{Broadcast Mess PortSender Receiver}
       Message
@@ -192,27 +210,28 @@ in
       PlayerUpdated
       Answer
    in
+      {SimulateThinking Player}
       {Send Player.port move(ID Position Direction)}
       %4 Surface has been chosen
       if Direction == surface then
          {Broadcast saySurface(ID) Player.port 1}
          {Send PortGui surface(ID)}
          PlayerUpdated = {AdjoinList Player [turnSurface#1]}
+         {SimulateThinking PlayerUpdated}
          {System.show main(msg:playerIsSurface)}
-         {Delay 100}
       %5 The chosen direction is broadcast
       else
          {System.show main(func: askMove msg:broadcastDirection player: ID vPos: Position var:Direction)}
          {Broadcast sayMove(ID Direction) Player.port 1}
          {Send PortGui movePlayer(ID Position)}
          {System.show main(msg:askMoveDone)}
-         {Delay 100}
+         {SimulateThinking Player}
          %Go 6
          {AskCharge Player}{System.show main(msg:askChargeDone)}
-         {Delay 100}
+         {SimulateThinking Player}
          %Go 7
          {AskFire Player}{System.show main(msg:askFireDone)}
-         {Delay 100}
+         {SimulateThinking Player}
          %8
          {AskFireMine Player}{System.show main(msg:askFireMineDone)}
          {Delay 100}
@@ -225,28 +244,29 @@ in
    %Turn for one player
    fun {PlayTurn Player}
       FirstUpdate
-      PlayersUpdated
+      PlayerUpdated
    in
       {System.show main(func: playTurn msg:playerTurn var:Player.id)}
       if Player.turnSurface == 0 then 
          %Go 3
-         PlayersUpdated = {AskMove Player}
+         PlayerUpdated = {AskMove Player}
          {System.show main(func: playTurn msg:endd)}
       else 
          if Player.turnSurface == Input.turnSurface then 
             {Send Player.port dive}
             FirstUpdate = {AdjoinList Player [turnSurface#0]}
             %Go 3
-            PlayersUpdated = {AskMove Player}
+            PlayerUpdated = {AskMove Player}
             {System.show main(func: playTurn msg:endd)}
          else
-            PlayersUpdated = {AdjoinList Player [turnSurface#Player.turnSurface+1]}
+            PlayerUpdated = {AdjoinList Player [turnSurface#Player.turnSurface+1]}
+            {SimulateThinking PlayerUpdated}
             {System.show main(func: playTurn msg:endd)}
          end
       end
-      PlayersUpdated
+      PlayerUpdated
    end
-
+%%% TURN BY TURN %%%
    proc {TurnByTurn Count Players NDeath} 
       PlayersUpdated
       IsDead
@@ -274,6 +294,27 @@ in
          end
       end
    end
+   
+%%% Simultaneous %%%
+   proc{PlaySimultaneousTurn Player} IsDead in
+      {Send Player.port isDead(IsDead)}
+      if IsDead == false andthen Start then 
+         {PlaySimultaneousTurn {PlayTurn Player}}
+      end
+   end
+
+   proc{SimultaneousTurn Count Players}
+      thread {PlaySimultaneousTurn Players.Count} end
+      if Count < Input.nbPlayer then 
+         {SimultaneousTurn Count+1 Players}
+      else
+         Start = true
+      end
+   end
+%%% Start game %%%
    {Delay 3000}
-   {TurnByTurn 1 Players 0}
+   if Input.isTurnByTurn then
+      {TurnByTurn 1 Players 0}
+   else  {SimultaneousTurn 1 Players}
+   end
 end
