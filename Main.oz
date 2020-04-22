@@ -233,9 +233,7 @@ in
          {AskFire Player}{System.show main(msg:askFireDone)}
          {SimulateThinking Player}
          %8
-         {AskFireMine Player}{System.show main(msg:askFireMineDone)}
-         {Delay 100}
-         
+         {AskFireMine Player}{System.show main(msg:askFireMineDone)}   
          PlayerUpdated = Player
       end
       PlayerUpdated
@@ -274,7 +272,6 @@ in
       CountUpdated
       NDeathUpdated
    in
-      {Delay 500}
       {System.show main(msg:newTurn vCount:Count vDeath:NDeath)}
       if NDeath == Input.nbPlayer -1 then {System.show main(func: turnByTurn msg:winnerIs var: Count)}
       else
@@ -312,7 +309,7 @@ in
       end
    end
 %%% Start game %%%
-   {Delay 3000}
+   %{Delay 3000}
    if Input.isTurnByTurn then
       {TurnByTurn 1 Players 0}
    else  {SimultaneousTurn 1 Players}

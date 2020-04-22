@@ -65,7 +65,7 @@ in
             life: Input.maxDamage
             enemies: enemies()
             sonarLaunched:0
-            lastMissile:null
+            lastMissile:pt(x:0 y:0)
         )
         Submarine
     end  

@@ -252,6 +252,7 @@ in
 	end
 
 	proc{TreatStream Stream Grid State}
+		{Delay Input.guiDelay}
 		case Stream
 		of nil then skip
 		[] buildWindow|T then NewGrid in 
