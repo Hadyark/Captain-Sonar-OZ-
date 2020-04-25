@@ -196,12 +196,10 @@ in
          case Mine
          of null then {System.show main(func: askFireMine msg:mine var:Mine)}
          [] pt(x:X y:Y) then 
+            {System.show main(func: askFireMine msg:ID var:Mine)}
             {Broadcast sayMineExplode(ID Mine) Player.port 1 }
             {Send PortGui explosion(ID Mine)}
             {Send PortGui removeMine(ID Mine)}
-         else 
-            {System.show bug(func: askFireMine msg:mine var:m(Mine))}
-            {Delay 100000}
          end
       end
    end
