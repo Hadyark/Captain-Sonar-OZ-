@@ -48,6 +48,7 @@ define
 
     ShortestPath
     GetPath
+    Mergelist
 in
       
 %%% Initialize submarine
@@ -354,7 +355,7 @@ in
         Enemy
         Enemies
         in  
-        if ID == Submarine.id then Submarine
+        if ID == Submarine.id orelse ID == null then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0 possiblesPositions:nil)]}
@@ -372,7 +373,7 @@ in
         EnemyDirection
         UpdatedPossiblesPositions
         in
-        if ID == Submarine.id then Submarine
+        if ID == Submarine.id orelse ID == null then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 EnemyDirection = Direction | nil
@@ -394,7 +395,7 @@ in
     end
 %%% SayMinePlaced
     fun {SayMinePlaced ID Submarine}
-        if ID == Submarine.id then Submarine
+        if ID == Submarine.id orelse ID == null then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 {UpdateEnemy ID Submarine [nbMines#0]}
@@ -431,7 +432,7 @@ in
     end
 %%% SayMineExplode
     fun {SayMineExplode ID Position Message Submarine}
-        if ID == Submarine.id then
+        if ID == Submarine.id orelse ID == null then
             {DistanceDammage Position Message Submarine}
         else
             {DistanceDammage Position Message {UpdateEnemy ID Submarine [nbMines#Submarine.enemies.(ID.id).nbMines-1]}}
@@ -489,7 +490,7 @@ in
     end
 %%% SayDeath
     fun {SayDeath ID Submarine}
-        {UpdateEnemy ID Submarine [isDeath#true]}
+        {UpdateEnemy ID Submarine [possiblesPositions#nil]}
     end
 %%% SayDamageTaken
     fun {SayDamageTaken ID Damage LifeLeft Submarine}
@@ -538,7 +539,7 @@ in
 
     fun{ValidPath Directions Point}
         NewPoint   
-        in
+        in 
         if {IsWater Point} then
             case Directions
             of nil then true
@@ -554,11 +555,11 @@ in
         end
     end
 
-    fun {CheckPoints Directions ListPoints}       {System.show checkPoints(Directions)}
+    fun {CheckPoints Directions ListPoints}
         case ListPoints
         of nil then nil
         [] Point | T then 
-            if {ValidPath Directions Point} then{System.show checkPoints(valid:Directions)}
+            if {ValidPath Directions Point} then
                 Point | {CheckPoints Directions T}
             else
                 {CheckPoints Directions T}
@@ -591,15 +592,20 @@ in
         end
     end
 
-    fun{CheckPositionsEvery Enemies Count ID}
-        {System.show debugCheckPositionsEvery(Enemies Count)}
+    fun{CheckPositionsEvery Enemies Count ID} 
+        L1
+        L2
+        in
         if Enemies == enemies then nil 
         else
+            {System.show every(enem:Enemies c:Count i:ID)}
             if {Value.hasFeature Enemies ID} then 
                 if Count == {Record.width Enemies} then
                     {CheckPoints Enemies.ID.visited Enemies.ID.possiblesPositions}
                 else
-                    {AdjoinList {CheckPoints Enemies.ID.visited Enemies.ID.possiblesPositions} {CheckPositionsEvery Enemies Count+1 ID+1}}
+                    L1 = {CheckPoints Enemies.ID.visited Enemies.ID.possiblesPositions}
+                    L2 = {CheckPositionsEvery Enemies Count+1 ID+1}
+                    {Mergelist L1 L2}
                 end
             else
                 {CheckPositionsEvery Enemies Count ID+1}
@@ -611,9 +617,10 @@ in
     fun{FirePosition ListPoints Submarine Min Max}
         Distance
         in
+        {System.show f(ListPoints)}
         case ListPoints
         of nil then nil
-        [] Position | T then
+        [] Position | T then {System.show debug}
             Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
             {System.show firePosition(sub: Submarine.pt)}
             {System.show firePosition(pos: Position)}
@@ -657,6 +664,14 @@ in
             end
         Return
     end
+    fun {Mergelist L1 L2}
+        case L1|L2 
+        of (H1|T1)|(H2|T2) then H1|{Mergelist T1 L2}
+        [] L|nil then L
+        [] nil|L then L
+        [] nil|nil then nil
+    end
+end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
         SubmarineUpdated

@@ -188,6 +188,7 @@ in
       Mine
       IsDead
    in
+      {System.show askFireMine}
       {Send Player.port isDead(IsDead)}
       if IsDead == false then
          {Send Player.port fireMine(ID Mine)}
@@ -197,6 +198,9 @@ in
             {Broadcast sayMineExplode(ID Mine) Player.port 1 }
             {Send PortGui explosion(ID Mine)}
             {Send PortGui removeMine(ID Mine)}
+         else 
+            {System.show bug(func: askFireMine msg:mine var:m(Mine))}
+            {Delay 100000}
          end
       end
    end
@@ -307,7 +311,7 @@ in
       end
    end
 %%% Start game %%%
-   {Delay 3000}
+   {Delay 8000}
    if Input.isTurnByTurn then
       {TurnByTurn 1 Players 0}
    else  {SimultaneousTurn 1 Players}

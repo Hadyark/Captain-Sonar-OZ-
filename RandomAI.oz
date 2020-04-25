@@ -320,7 +320,7 @@ in
             SubmarineUpdated = {AdjoinList Submarine [missile#0]}
         [] mine then 
             FireItem = mine({RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine})
-            ListMine =  FireItem.pt | Submarine.mines
+            ListMine =  FireItem.1 | Submarine.mines
             SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
         [] sonar then 
             FireItem = sonar
@@ -368,7 +368,7 @@ in
         Enemy
         Enemies
     in  
-        if ID == Submarine.id then Submarine
+        if ID == Submarine.id orelse ID == null then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 Up = {AdjoinList Submarine.enemies [(ID.id)#enemy(id:ID visited:nil nbMines:0 missile:0 sonar:0 drone:0)]}
@@ -385,7 +385,7 @@ in
     fun {SayMove ID Direction Submarine}
         EnemyDirection
     in
-        if ID == Submarine.id then Submarine
+        if ID == Submarine.id orelse ID == null then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 EnemyDirection = Direction | nil
@@ -405,7 +405,7 @@ in
     end
 %%% SayMinePlaced
     fun {SayMinePlaced ID Submarine}
-        if ID == Submarine.id then Submarine
+        if ID == Submarine.id orelse ID == null then Submarine
         else
             if {Value.hasFeature Submarine.enemies (ID.id)} == false then
                 {UpdateEnemy ID Submarine [nbMines#0]}
@@ -442,7 +442,7 @@ in
     end
 %%% SayMineExplode
     fun {SayMineExplode ID Position Message Submarine}
-        if ID == Submarine.id then
+        if ID == Submarine.id orelse ID == null then
             {DistanceDammage Position Message Submarine}
         else
             {DistanceDammage Position Message {UpdateEnemy ID Submarine [nbMines#Submarine.enemies.(ID.id).nbMines-1]}}
@@ -495,7 +495,11 @@ in
     end
 %%% SayAnswerSonar
     fun {SayAnswerSonar ID Answer Submarine}
-        {UpdateEnemy ID Submarine [possibleX#Answer.x possibleY#Answer.y]}
+    {System.show debug(id:ID a:Answer)}
+        if ID == null then Submarine
+        else
+            {UpdateEnemy ID Submarine [possibleX#Answer.x possibleY#Answer.y]}
+        end
     end
 %%% SayDeath
     fun {SayDeath ID Submarine}
