@@ -34,10 +34,8 @@ define
     InitSubmarine
     IsWater
     IsNotVisited
-    DisponnibleItem
     UpdateEnemy
     DistanceDammage
-    RandomFirePosition
 
     %%% ADVANCED AI
     GeneratePossiblesPositions
@@ -47,6 +45,9 @@ define
     CheckPositionsEvery
     FirePosition
     UpdatePossiblesPositions
+
+    ShortestPath
+    GetPath
 in
       
 %%% Initialize submarine
@@ -157,10 +158,56 @@ in
         Visit
         SubmarineUpdated
         PossibleDirection
+        PositionsIsRange
+        Possibles
+        NextPos
         Dir
+        Shortest
+        MyPoint
         in
-        PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
-        Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
+        %Create list with every players's position
+        Possibles = {CheckPositionsEvery Submarine.enemies 1 1} 
+        {System.show movePossible(Possibles)}
+        %Get if possition is within range
+        PositionsIsRange = {FirePosition Possibles Submarine Input.minDistanceMissile 4}
+        {System.show iAm(Submarine.id.color)}
+        {System.show moveIsRange(PositionsIsRange Submarine.missile)}
+        %If i have a missile and if I am not within range to fire someone and if I am not too close (Distance >3) -> need move fast
+        if Submarine.missile == Input.missile andthen PositionsIsRange == nil
+        andthen Possibles \= nil andthen {Abs (Submarine.pt.x - Possibles.1.x)} + {Abs (Submarine.pt.y - Possibles.1.y)} > 3 then
+            {System.show beforeShortestPath}
+            %get the shortest path
+            MyPoint = [pt(x: Submarine.pt.x y: Submarine.pt.y id:(((Submarine.pt.x)*100)+(Submarine.pt.y)) prev:null)]
+            Shortest = {ShortestPath Possibles.1 MyPoint visited()}
+            %if a path exist
+            {System.show Shortest}
+            {System.show ((Possibles.1.x)*100)+(Possibles.1.y)}
+            if {Value.hasFeature Shortest ((Possibles.1.x)*100)+(Possibles.1.y)} then
+                %Get the next posistion
+                NextPos ={List.last {GetPath Shortest ((Possibles.1.x)*100)+(Possibles.1.y)} }
+                {System.show nextPos(NextPos)}
+                %if the next position is not visited -> get the next direction
+                if {IsNotVisited Submarine.visited NextPos} then
+                    {System.show notVisited}
+                    if NextPos.x == Submarine.pt.x     andthen NextPos.y == Submarine.pt.y+1  then Dir=east end
+                    if NextPos.x == Submarine.pt.x-1   andthen NextPos.y == Submarine.pt.y    then Dir=north end
+                    if NextPos.x == Submarine.pt.x+1   andthen NextPos.y == Submarine.pt.y    then Dir=south end
+                    if NextPos.x == Submarine.pt.x     andthen NextPos.y == Submarine.pt.y-1  then Dir=west end
+                    {System.show dir(Dir)}
+                else {System.show visitedGoSurface} Dir=surface
+                end
+            %if a path doesn't exist -> random position
+            else
+                PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
+                Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
+            end
+            %{Delay 10000}
+        %If i have not a missile or if I am within range -> Random direction  
+        else
+            PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
+            Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
+        end
+
         case Dir
         of surface then
             SubmarineUpdated = {AdjoinList Submarine [turnSurface#1 visited#nil]}
@@ -243,67 +290,9 @@ in
         ID = Submarine.id
         SubmarineUpdated
     end
-%%% DisponnibleItem
-    fun {DisponnibleItem Submarine List}
-        case List
-        of nil then skip
-            null | nil
-        [] missile | T then 
-            if Submarine.missile == Input.missile then
-                missile| {DisponnibleItem Submarine T}
-            else 
-                {DisponnibleItem Submarine T}
-            end
-        [] mine | T then 
-            if Submarine.mine == Input.mine then
-                mine| {DisponnibleItem Submarine T}
-            else 
-                {DisponnibleItem Submarine T}
-            end
-        [] sonar | T then 
-            if Submarine.sonar == Input.sonar then
-                sonar| {DisponnibleItem Submarine T}
-            else 
-                {DisponnibleItem Submarine T}
-            end
-        [] drone | T then 
-            if Submarine.drone == Input.drone then
-                drone| {DisponnibleItem Submarine T}
-            else 
-                {DisponnibleItem Submarine T}
-            end
-        end
-    end
-%%% RandomFirePosition
-    fun{RandomFirePosition Min Max Submarine}
-        RX
-        RY
-        Choice
-        Position
-        Distance
-        in %{Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
-        RX = ({OS.rand} mod (Max +1))
-        RY = ({OS.rand} mod (Max +1))
-        Choice = ({OS.rand} mod 4)
-        case Choice
-        of 0 then Position = pt(x:(Submarine.pt.x +RX) y:(Submarine.pt.y +RY))
-        [] 1 then Position = pt(x:(Submarine.pt.x +RX) y:(Submarine.pt.y -RY))
-        [] 2 then Position = pt(x:(Submarine.pt.x -RX) y:(Submarine.pt.y +RY))
-        [] 3 then Position = pt(x:(Submarine.pt.x -RX) y:(Submarine.pt.y -RY))
-        end
-        Distance = {Abs (Submarine.pt.x - Position.x)} + {Abs (Submarine.pt.y - Position.y)}
-        if {IsWater Position} andthen Distance > Min andthen Distance =< Max then
-            Position
-        else
-            {RandomFirePosition Min Max Submarine}
-        end
-    end
-
 %%% FireItem
     fun {FireItem ID FireItem Submarine } 
-        Rand
         Item
-        ListMine
         SubmarineUpdated
         Position
         Possibles
@@ -328,21 +317,9 @@ in
         of missile then
             FireItem = missile(Position)
             SubmarineUpdated = {AdjoinList Submarine [missile#0 lastMissile#Position]}
-        [] mine then 
-            FireItem = {RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine}
-            ListMine =  FireItem | Submarine.mines
-            SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
         [] sonar then 
             FireItem = sonar
             SubmarineUpdated = {AdjoinList Submarine [sonar#0 sonarLaunched#Submarine.sonarLaunched+1]}
-        [] drone then 
-            SubmarineUpdated = {AdjoinList Submarine [drone#0]}
-            Rand = ({OS.rand} mod 2 )
-            if Rand == 1 then
-                FireItem = drone(row ({OS.rand} mod Input.nRow +1))
-            else
-                FireItem = drone(column ({OS.rand} mod Input.nColumn +1))
-            end
         else
             FireItem = null
             SubmarineUpdated = Submarine
@@ -645,6 +622,40 @@ in
             else {FirePosition T Submarine Min Max}
             end
         end
+    end
+    %%% Shortest path
+    fun{GetPath Visited Arrive}{System.show Visited.Arrive}
+        if Visited.Arrive.prev == null then nil
+        else Visited.Arrive | {GetPath Visited Visited.Arrive.prev} end
+    end
+    fun {ShortestPath Arrive List Visited}
+        NewList
+        NewVisited
+        Return
+        N W E S
+        in 
+            case List
+            of nil then Return = Visited
+            [] H | T then 
+                if{IsWater H} andthen {Value.hasFeature Visited (H.id)} \= true then
+                    NewVisited = {AdjoinList Visited [(H.id)#H]}
+                    if H.x == Arrive.x andthen H.y == Arrive.y then Return = NewVisited 
+                    else
+                        N = pt(x: H.x-1 y:H.y id:((H.x-1)*100)+(H.y) prev:(H.id))
+                        E = pt(x: H.x y:H.y+1 id:((H.x)*100)+(H.y+1) prev:(H.id))  
+                        W = pt(x: H.x y:H.y-1 id:((H.x)*100)+(H.y-1) prev:(H.id))  
+                        S = pt(x: H.x+1 y:H.y id:((H.x+1)*100)+(H.y) prev:(H.id))  
+
+                        NewList =  {Append T [N E W S]}
+                        
+                        Return = {ShortestPath Arrive NewList NewVisited}
+                    end
+                else
+                    if H.x < 1 orelse H.y < 1 orelse H.x > Input.nRow orelse H.y > Input.nColumn then Return = {ShortestPath Arrive T {Record.subtract Visited H.id}}
+                    else Return = {ShortestPath Arrive T Visited}end
+                end
+            end
+        Return
     end
 %%% Port
     proc{TreatStream Stream Submarine} % as as many parameters as you want
