@@ -51,7 +51,7 @@ in
 
 %%%% Style of game %%%%
 
-   IsTurnByTurn = false
+   IsTurnByTurn = true
 
 %%%% Description of the map %%%%
 
@@ -61,7 +61,7 @@ in
    fun {NewRow Row1 Row2}
         [Row1.1 Row1.2.1 Row1.2.2.1 Row1.2.2.2.1 Row1.2.2.2.2.1 Row2.1 Row2.2.1 Row2.2.2.1 Row2.2.2.2.1 Row2.2.2.2.2.1]
     end
-    fun {GenerateMap Map1 Map2 Map3 Map4}
+   fun {GenerateMap Map1 Map2 Map3 Map4}
         [
         {NewRow Map1.1 Map2.1}
         {NewRow Map1.2.1 Map2.2.1}

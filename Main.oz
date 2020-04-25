@@ -123,10 +123,14 @@ in
             end
          [] sayPassingDrone(KindFire) then
             {Send Players.Receiver.port sayPassingDrone(KindFire IDTouch Answer)}
-            {Send PortSender sayAnswerDrone(KindFire IDTouch Answer)}
+            if IDTouch \= null then
+               {Send PortSender sayAnswerDrone(KindFire IDTouch Answer)}
+            end
          [] sayPassingSonar then
             {Send Players.Receiver.port sayPassingSonar(IDTouch Answer)}
-            {Send PortSender sayAnswerSonar(IDTouch Answer)}
+            if IDTouch \= null then
+               {Send PortSender sayAnswerSonar(IDTouch Answer)}
+            end
          [] sayDeath(IDTouch) then
             {System.show main(func: broadcast msg:sayDeath var:IDTouch)}
             {Send Players.Receiver.port Mess}
@@ -142,9 +146,8 @@ in
       KindItem
       IsDead
    in
-      {Send Player.port isDead(IsDead)}
-      if IsDead == false then
-         {Send Player.port chargeItem(ID KindItem)}
+      {Send Player.port chargeItem(ID KindItem)}
+      if ID \= null then
          case KindItem 
          of null then {System.show main(func: askCharge msg:kindItem var:null)}
          [] _ then
@@ -159,9 +162,8 @@ in
       KindFire
       IsDead
    in 
-      {Send Player.port isDead(IsDead)}
-      if IsDead == false then
-         {Send Player.port fireItem(ID KindFire)}
+      {Send Player.port fireItem(ID KindFire)}
+      if ID \= null then
          case KindFire
          of null then {System.show main(func: askFire msg:kindFire var:KindFire)}
          [] mine(Position) then 
@@ -189,9 +191,8 @@ in
       IsDead
    in
       {System.show askFireMine}
-      {Send Player.port isDead(IsDead)}
-      if IsDead == false then
-         {Send Player.port fireMine(ID Mine)}
+      {Send Player.port fireMine(ID Mine)}
+      if ID \= null then
          case Mine
          of null then {System.show main(func: askFireMine msg:mine var:Mine)}
          [] pt(x:X y:Y) then 
@@ -214,31 +215,34 @@ in
    in
       {SimulateThinking Player}
       {Send Player.port move(ID Position Direction)}
-      %4 Surface has been chosen
-      if Direction == surface then
-         {Broadcast saySurface(ID) Player.port 1}
-         {Send PortGui surface(ID)}
-         PlayerUpdated = {AdjoinList Player [turnSurface#1]}
-         {SimulateThinking PlayerUpdated}
-         {System.show main(msg:playerIsSurface)}
-      %5 The chosen direction is broadcast
+      if ID == null then Player
       else
-         {System.show main(func: askMove msg:broadcastDirection player: ID vPos: Position var:Direction)}
-         {Broadcast sayMove(ID Direction) Player.port 1}
-         {Send PortGui movePlayer(ID Position)}
-         {System.show main(msg:askMoveDone)}
-         {SimulateThinking Player}
-         %Go 6
-         {AskCharge Player}{System.show main(msg:askChargeDone)}
-         {SimulateThinking Player}
-         %Go 7
-         {AskFire Player}{System.show main(msg:askFireDone)}
-         {SimulateThinking Player}
-         %8
-         {AskFireMine Player}{System.show main(msg:askFireMineDone)}   
-         PlayerUpdated = Player
+         %4 Surface has been chosen
+         if Direction == surface then
+            {Broadcast saySurface(ID) Player.port 1}
+            {Send PortGui surface(ID)}
+            PlayerUpdated = {AdjoinList Player [turnSurface#1]}
+            {SimulateThinking PlayerUpdated}
+            {System.show main(msg:playerIsSurface)}
+         %5 The chosen direction is broadcast
+         else
+            {System.show main(func: askMove msg:broadcastDirection player: ID vPos: Position var:Direction)}
+            {Broadcast sayMove(ID Direction) Player.port 1}
+            {Send PortGui movePlayer(ID Position)}
+            {System.show main(msg:askMoveDone)}
+            {SimulateThinking Player}
+            %Go 6
+            {AskCharge Player}{System.show main(msg:askChargeDone)}
+            {SimulateThinking Player}
+            %Go 7
+            {AskFire Player}{System.show main(msg:askFireDone)}
+            {SimulateThinking Player}
+            %8
+            {AskFireMine Player}{System.show main(msg:askFireMineDone)}   
+            PlayerUpdated = Player
+         end
+         PlayerUpdated
       end
-      PlayerUpdated
    end
   
    %Turn for one player

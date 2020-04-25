@@ -156,29 +156,34 @@ in
         PossibleDirection
         Dir
     in
-        {System.show player(func: move msg:myPosition var: Submarine.pt)}
-        PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
-        {System.show player(func: move msg:possibleDirection var: PossibleDirection)}
-        Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
-        {System.show player(func: move msg:direction var: Dir )}
-        case Dir
-        of surface then
-            SubmarineUpdated = {AdjoinList Submarine [turnSurface#1 visited#nil]}
+        if Submarine.life < 1 then
+            ID =null
+            Submarine
         else 
-            case Dir 
-            of east then Position = pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1)) 
-            [] north then Position = pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y)) 
-            [] south then Position = pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y)) 
-            [] west then Position = pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1)) 
-            end
-            Visit = Submarine.pt | Submarine.visited
-            {System.show player(func: move msg:newPosition var: Position )}
-            SubmarineUpdated = {AdjoinList Submarine [pt#Position turnSurface#0 visited#Visit]} 
+            {System.show player(func: move msg:myPosition var: Submarine.pt)}
+            PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
+            {System.show player(func: move msg:possibleDirection var: PossibleDirection)}
+            Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
+            {System.show player(func: move msg:direction var: Dir )}
+            case Dir
+            of surface then
+                SubmarineUpdated = {AdjoinList Submarine [turnSurface#1 visited#nil]}
+            else 
+                case Dir 
+                of east then Position = pt(x:(Submarine.pt.x) y:(Submarine.pt.y+1)) 
+                [] north then Position = pt(x:(Submarine.pt.x-1) y:(Submarine.pt.y)) 
+                [] south then Position = pt(x:(Submarine.pt.x+1) y:(Submarine.pt.y)) 
+                [] west then Position = pt(x:(Submarine.pt.x) y:(Submarine.pt.y-1)) 
+                end
+                Visit = Submarine.pt | Submarine.visited
+                {System.show player(func: move msg:newPosition var: Position )}
+                SubmarineUpdated = {AdjoinList Submarine [pt#Position turnSurface#0 visited#Visit]} 
 
+            end
+            ID = Submarine.id
+            Direction = Dir
+            SubmarineUpdated
         end
-        ID = Submarine.id
-        Direction = Dir
-        SubmarineUpdated
     end
 %%% Dive
     fun {Dive Submarine}
@@ -190,61 +195,65 @@ in
         Item
         SubmarineUpdated
     in
-        Items = [missile mine sonar drone]
-        Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )} %({OS.rand} mod ({List.length Items}) + 1 )
-        case Item 
-        of missile then
-            if Submarine.missile == Input.missile then
-                KindItem = null
-                SubmarineUpdated = Submarine
-            else
-                SubmarineUpdated = {AdjoinList Submarine [missile#Submarine.missile+1]}
-                if SubmarineUpdated.missile == Input.missile then
-                    KindItem = missile
-                else 
-                    KindItem = null 
+        if Submarine.life < 1 then
+            ID =null
+            Submarine
+        else 
+            Items = [missile mine sonar drone]
+            Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )} %({OS.rand} mod ({List.length Items}) + 1 )
+            case Item 
+            of missile then
+                if Submarine.missile == Input.missile then
+                    KindItem = null
+                    SubmarineUpdated = Submarine
+                else
+                    SubmarineUpdated = {AdjoinList Submarine [missile#Submarine.missile+1]}
+                    if SubmarineUpdated.missile == Input.missile then
+                        KindItem = missile
+                    else 
+                        KindItem = null 
+                    end
                 end
-            end
-        [] mine then 
-            if Submarine.mine == Input.mine then
+            [] mine then 
+                if Submarine.mine == Input.mine then
+                    KindItem = null
+                    SubmarineUpdated = Submarine
+                else
+                    SubmarineUpdated = {AdjoinList Submarine [mine#Submarine.mine+1]}
+                    if SubmarineUpdated.mine == Input.mine then
+                        KindItem = mine
+                    else KindItem = null end
+                end
+            [] sonar then 
+                if Submarine.sonar == Input.sonar then
+                    KindItem = null
+                    SubmarineUpdated = Submarine
+                else
+                    SubmarineUpdated = {AdjoinList Submarine [sonar#Submarine.sonar+1]}
+                    if SubmarineUpdated.sonar == Input.sonar then
+                        KindItem = sonar
+                    else KindItem = null end
+                end
+            [] drone then 
+                if Submarine.drone == Input.drone then
+                    KindItem = null
+                    SubmarineUpdated = Submarine
+                else
+                    SubmarineUpdated = {AdjoinList Submarine [drone#Submarine.drone+1]}
+                    if SubmarineUpdated.drone == Input.drone then
+                        KindItem = drone
+                    else KindItem = null end
+                end
+            else
                 KindItem = null
                 SubmarineUpdated = Submarine
-            else
-                SubmarineUpdated = {AdjoinList Submarine [mine#Submarine.mine+1]}
-                if SubmarineUpdated.mine == Input.mine then
-                    KindItem = mine
-                else KindItem = null end
             end
-        [] sonar then 
-            if Submarine.sonar == Input.sonar then
-                KindItem = null
-                SubmarineUpdated = Submarine
-            else
-                SubmarineUpdated = {AdjoinList Submarine [sonar#Submarine.sonar+1]}
-                if SubmarineUpdated.sonar == Input.sonar then
-                    KindItem = sonar
-                else KindItem = null end
-            end
-        [] drone then 
-            if Submarine.drone == Input.drone then
-                KindItem = null
-                SubmarineUpdated = Submarine
-            else
-                SubmarineUpdated = {AdjoinList Submarine [drone#Submarine.drone+1]}
-                if SubmarineUpdated.drone == Input.drone then
-                    KindItem = drone
-                else KindItem = null end
-            end
-        else
-            KindItem = null
-            SubmarineUpdated = Submarine
+            ID = Submarine.id
+            SubmarineUpdated
         end
-        ID = Submarine.id
-        SubmarineUpdated
     end
 %%% DisponnibleItem
     fun {DisponnibleItem Submarine List}
-
         case List
         of nil then skip
             null | nil
@@ -310,51 +319,61 @@ in
         ListMine
         SubmarineUpdated
     in
-        Items = {DisponnibleItem Submarine [missile mine sonar drone]}
-        {System.show player(func: fireItem msg:items var:Items)}
-        Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )}
-        {System.show player(func: fireItem msg:item var:Item)}
-        case Item 
-        of missile then 
-            FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile Submarine})
-            SubmarineUpdated = {AdjoinList Submarine [missile#0]}
-        [] mine then 
-            FireItem = mine({RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine})
-            ListMine =  FireItem.1 | Submarine.mines
-            SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
-        [] sonar then 
-            FireItem = sonar
-            SubmarineUpdated = {AdjoinList Submarine [sonar#0]}
-        [] drone then 
-            SubmarineUpdated = {AdjoinList Submarine [drone#0]}
-            Rand = ({OS.rand} mod 2 )
-            if Rand == 1 then
-                FireItem = drone(row ({OS.rand} mod Input.nRow +1))
+        if Submarine.life < 1 then
+            ID =null
+            Submarine
+        else 
+            Items = {DisponnibleItem Submarine [missile mine sonar drone]}
+            {System.show player(func: fireItem msg:items var:Items)}
+            Item = {List.nth Items ({OS.rand} mod ({List.length Items}) + 1 )}
+            {System.show player(func: fireItem msg:item var:Item)}
+            case Item 
+            of missile then 
+                FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile Submarine})
+                SubmarineUpdated = {AdjoinList Submarine [missile#0]}
+            [] mine then 
+                FireItem = mine({RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine})
+                ListMine =  FireItem.1 | Submarine.mines
+                SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
+            [] sonar then 
+                FireItem = sonar
+                SubmarineUpdated = {AdjoinList Submarine [sonar#0]}
+            [] drone then 
+                SubmarineUpdated = {AdjoinList Submarine [drone#0]}
+                Rand = ({OS.rand} mod 2 )
+                if Rand == 1 then
+                    FireItem = drone(row ({OS.rand} mod Input.nRow +1))
+                else
+                    FireItem = drone(column ({OS.rand} mod Input.nColumn +1))
+                end
             else
-                FireItem = drone(column ({OS.rand} mod Input.nColumn +1))
+                FireItem = null
+                SubmarineUpdated = Submarine
             end
-        else
-            FireItem = null
-            SubmarineUpdated = Submarine
+            ID = Submarine.id
+            SubmarineUpdated
         end
-        ID = Submarine.id
-        SubmarineUpdated
     end
 %%% FireMine
     fun {FireMine ID Mine Submarine}
         SubmarineUpdated
         in
-        {System.show Submarine}
-        ID= Submarine.id
-        case Submarine.mines
-        of nil then
-            Mine = null
-            SubmarineUpdated = Submarine
-        [] H | T then
-            Mine = H
-            SubmarineUpdated = {AdjoinList Submarine [mines#T]}
+        if Submarine.life < 1 then
+            ID =null
+            Submarine
+        else 
+            {System.show Submarine}
+            ID= Submarine.id
+            case Submarine.mines
+            of nil then
+                Mine = null
+                SubmarineUpdated = Submarine
+            [] H | T then
+                Mine = H
+                SubmarineUpdated = {AdjoinList Submarine [mines#T]}
+            end
+            SubmarineUpdated
         end
-        SubmarineUpdated
     end    
 %%% IsDead
     fun {IsDead Answer Submarine}
@@ -438,35 +457,50 @@ in
     end
 %%% SayMissileExplode
     fun {SayMissileExplode ID Position Message Submarine}
-        {DistanceDammage Position Message {UpdateEnemy ID Submarine [missile#false]}}
+        if Submarine.life < 1 then
+            Message =null
+            Submarine
+        else
+            {DistanceDammage Position Message {UpdateEnemy ID Submarine [missile#false]}}
+        end
     end
 %%% SayMineExplode
     fun {SayMineExplode ID Position Message Submarine}
-        if ID == Submarine.id orelse ID == null then
-            {DistanceDammage Position Message Submarine}
+        if Submarine.life < 1 then
+            Message =null
+            Submarine
         else
-            {DistanceDammage Position Message {UpdateEnemy ID Submarine [nbMines#Submarine.enemies.(ID.id).nbMines-1]}}
+            if ID == Submarine.id orelse ID == null then
+                {DistanceDammage Position Message Submarine}
+            else
+                {DistanceDammage Position Message {UpdateEnemy ID Submarine [nbMines#Submarine.enemies.(ID.id).nbMines-1]}}
+            end
         end
     end
 %%% SayPassingDrone
     fun {SayPassingDrone Drone ID Answer Submarine}
-        ID = Submarine.id
-        case Drone
-        of drone(row X) then
-            if Submarine.pt.x == X then
-                Answer = true
-            else
-                Answer = false
+        if Submarine.life < 1 then
+            ID =null
+            Submarine
+        else     
+            ID = Submarine.id
+            case Drone
+            of drone(row X) then
+                if Submarine.pt.x == X then
+                    Answer = true
+                else
+                    Answer = false
+                end
+            [] drone(column Y) then
+                if Submarine.pt.y == Y then
+                    Answer = true
+                else
+                    Answer = false
+                end
             end
-        [] drone(column Y) then
-            if Submarine.pt.y == Y then
-                Answer = true
-            else
-                Answer = false
-            end
+            {System.show passing(Drone ID Answer)}
+            Submarine
         end
-        {System.show passing(Drone ID Answer)}
-        Submarine
     end
 %%% SayAnswerDrone
     fun {SayAnswerDrone Drone ID Answer Submarine}
@@ -485,17 +519,22 @@ in
     end
 %%% SayPassingSonar
     fun {SayPassingSonar ID Answer Submarine}
-        ID = Submarine.id
-        if ({OS.rand} mod 2) == 1 then
-            Answer = pt(x:Submarine.pt.x y:({OS.rand} mod (Input.nColumn) + 1 ))
-        else
-            Answer = pt(x:({OS.rand} mod (Input.nRow) + 1 ) y:Submarine.pt.y)
+        if Submarine.life < 1 then
+            ID =null
+            Submarine
+        else 
+            ID = Submarine.id
+            if ({OS.rand} mod 2) == 1 then
+                Answer = pt(x:Submarine.pt.x y:({OS.rand} mod (Input.nColumn) + 1 ))
+            else
+                Answer = pt(x:({OS.rand} mod (Input.nRow) + 1 ) y:Submarine.pt.y)
+            end
+            Submarine
         end
-        Submarine
     end
 %%% SayAnswerSonar
     fun {SayAnswerSonar ID Answer Submarine}
-    {System.show debug(id:ID a:Answer)}
+        {System.show debug(id:ID a:Answer)}
         if ID == null then Submarine
         else
             {UpdateEnemy ID Submarine [possibleX#Answer.x possibleY#Answer.y]}
