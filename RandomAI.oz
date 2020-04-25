@@ -319,8 +319,8 @@ in
             FireItem = missile({RandomFirePosition Input.minDistanceMissile Input.maxDistanceMissile Submarine})
             SubmarineUpdated = {AdjoinList Submarine [missile#0]}
         [] mine then 
-            FireItem = {RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine}
-            ListMine =  FireItem | Submarine.mines
+            FireItem = mine({RandomFirePosition Input.minDistanceMine Input.maxDistanceMine Submarine})
+            ListMine =  FireItem.pt | Submarine.mines
             SubmarineUpdated = {AdjoinList Submarine [mines#ListMine mine#0]}
         [] sonar then 
             FireItem = sonar

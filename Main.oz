@@ -164,10 +164,10 @@ in
          {Send Player.port fireItem(ID KindFire)}
          case KindFire
          of null then {System.show main(func: askFire msg:kindFire var:KindFire)}
-         [] pt(x:X y:Y) then 
+         [] mine(Position) then 
             {System.show main(func: askFire msg:fmine var:KindFire)}
             {Broadcast sayMinePlaced(ID) Player.port 1 }
-            {Send PortGui putMine(ID KindFire)}
+            {Send PortGui putMine(ID Position)}
          [] missile(Position) then 
             {System.show main(func: askFire msg:fmissile var:KindFire)}
             {Broadcast sayMissileExplode(ID Position) Player.port 1 }
@@ -180,8 +180,6 @@ in
             {System.show main(func: askFire msg:fsonar var:KindFire)}
             {Broadcast sayPassingSonar Player.port 1 }
             {Send PortGui sonar(ID)}
-         else
-            {System.show main(func: askFire msg:kindFire var:KindFire)}
          end
       end
    end
