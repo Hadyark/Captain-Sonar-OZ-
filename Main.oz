@@ -254,11 +254,12 @@ in
          PlayerUpdated = {AskMove Player}
          {System.show main(func: playTurn msg:endd)}
       else 
-         if Player.turnSurface == Input.turnSurface then 
+         if Player.turnSurface == Input.turnSurface then
             {Send Player.port dive}
-            FirstUpdate = {AdjoinList Player [turnSurface#0]}
+            
+            FirstUpdate = {AdjoinList Player [turnSurface#0]}{System.show u(FirstUpdate)}
             %Go 3
-            PlayerUpdated = {AskMove Player}
+            PlayerUpdated = {AskMove FirstUpdate}{System.show u2(PlayerUpdated)}
             {System.show main(func: playTurn msg:endd)}
          else
             PlayerUpdated = {AdjoinList Player [turnSurface#Player.turnSurface+1]}
@@ -291,7 +292,7 @@ in
             else CountUpdated = Count + 1 end
             if IsCurrentDead then NDeathUpdated = NDeath +1
             else NDeathUpdated = 0 end
-            {TurnByTurn CountUpdated Players NDeathUpdated}
+            {TurnByTurn CountUpdated PlayersUpdated NDeathUpdated}
          end
       end
    end

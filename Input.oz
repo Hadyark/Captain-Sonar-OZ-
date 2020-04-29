@@ -147,7 +147,11 @@ in
 
    NbPlayer = 5
    Players = [playerBasicAI playerBasicAI randomAI randomAI xxD4rkPulv3r1sat0rxX] %playerBasicAI player
-   Colors = [red green blue black grey]
+   NbPlayer = 15
+   Players = [playerBasicAI playerBasicAI playerBasicAI playerBasicAI playerBasicAI 
+               randomAI randomAI randomAI randomAI randomAI
+               xxD4rkPulv3r1sat0rxX xxD4rkPulv3r1sat0rxX xxD4rkPulv3r1sat0rxX xxD4rkPulv3r1sat0rxX xxD4rkPulv3r1sat0rxX] %playerBasicAI player
+   Colors = [red red red red red green green green green green blue blue blue blue blue]
 
 %%%% Thinking parameters (only in simultaneous) %%%%
 
