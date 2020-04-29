@@ -145,8 +145,6 @@ in
 
 %%%% Players description %%%%
 
-   NbPlayer = 5
-   Players = [playerBasicAI playerBasicAI randomAI randomAI xxD4rkPulv3r1sat0rxX] %playerBasicAI player
    NbPlayer = 15
    Players = [playerBasicAI playerBasicAI playerBasicAI playerBasicAI playerBasicAI 
                randomAI randomAI randomAI randomAI randomAI
