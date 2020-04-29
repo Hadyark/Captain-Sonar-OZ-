@@ -206,7 +206,6 @@ in
                     PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}
                     Dir = {List.nth PossibleDirection ({OS.rand} mod ({List.length PossibleDirection}) + 1 )}
                 end
-                %{Delay 10000}
             %If i have not a missile or if I am within range -> Random direction  
             else
                 PossibleDirection = {CanMove Submarine [east north south west east north south west east north south west surface ]}

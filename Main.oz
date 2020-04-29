@@ -314,7 +314,6 @@ in
       end
    end
 %%% Start game %%%
-   {Delay 8000}
    if Input.isTurnByTurn then
       {TurnByTurn 1 Players 0}
    else  {SimultaneousTurn 1 Players}
